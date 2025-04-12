@@ -126,7 +126,7 @@ namespace HP435B_Test
             SendCommand(":SENSe:FUNCtion \'VOLTage:DC\'");
             SendCommand(":SENSe:VOLTage:DC:RANGe 0.2");
 
-            // Set the DMM to trigger for 1000 measurements
+            // Set the DMM to trigger for specified measurements
             SendCommand(":sample:count " + testPoints);
             SendCommand(":trigger:source bus");
             SendCommand(":TRACe:POINts " + testPoints);
