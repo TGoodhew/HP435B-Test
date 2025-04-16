@@ -95,7 +95,7 @@ namespace HP435B_Test
 
         static void Main(string[] args)
         {
-            int testPoints = 100; // Number of test points to take
+            int testPoints = 500; // Number of test points to take
 
             StatisticalValues[] results = new StatisticalValues[10];
 
@@ -144,6 +144,10 @@ namespace HP435B_Test
 
             // Create a PDF report with the results
             CreeateReport(results);
+
+            // Reset the intrument and return to local control
+            SendCommand("*RST");
+            gpibSession.SendRemoteLocalCommand(GpibInstrumentRemoteLocalMode.GoToLocalDeassertRen);
         }
 
         private static StatisticalValues GetData(string stage)
@@ -359,7 +363,7 @@ namespace HP435B_Test
             }
 
             // Save the document.
-            document.Save("Output.pdf");
+            document.Save("Output"+DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf");
 
             // Close the document.
             document.Close(true);
