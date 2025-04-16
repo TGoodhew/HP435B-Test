@@ -10,6 +10,8 @@ using Syncfusion.Pdf.Graphics;
 using Syncfusion.Pdf.Grid;
 using System.Drawing;
 using System.Data;
+using Spectre.Console;
+using Color = System.Drawing.Color;
 
 namespace HP435B_Test
 {
@@ -22,7 +24,7 @@ namespace HP435B_Test
         public static SemaphoreSlim srqWait = new SemaphoreSlim(0, 1); // use a semaphore to wait for the SRQ events
 
         public static readonly string[] testStages = { "Fully CCW", "1 Step CW", "2 Steps CW", "3 Steps CW", "4 Steps CW", "5 Steps CW", "6 Steps CW", "7 Steps CW", "8 Steps CW", "Fully CW" };
-        public static readonly double[,] testStageValues = 
+        public static readonly double[,] zeroTestStageValues = 
         {
             {-15E-3, 15E-3},
             {-17E-3, 17E-3},
@@ -35,6 +37,21 @@ namespace HP435B_Test
             {-5E-3, 5E-3},
             {-5E-3, 5E-3}
         };
+
+        public static readonly double[,] accuracyTestStageValues =
+{
+            {975E-3, 1025E-3},
+            {978E-3, 1022E-3},
+            {981E-3, 1019E-3},
+            {984E-3, 1016E-3},
+            {987E-3, 1013E-3},
+            {998E-3, 1002E-3},
+            {990E-3, 1010E-3},
+            {990E-3, 1010E-3},
+            {990E-3, 1015E-3},
+            {990E-3, 1015E-3}
+        };
+
 
         public struct StatisticalValues
         {
@@ -95,7 +112,7 @@ namespace HP435B_Test
 
         static void Main(string[] args)
         {
-            int testPoints = 500; // Number of test points to take
+            int testPoints = 100; // Number of test points to take
 
             StatisticalValues[] results = new StatisticalValues[10];
 
@@ -110,8 +127,18 @@ namespace HP435B_Test
 
             gpibSession.ServiceRequest += SRQHandler;
 
-            // Get device ID
-            Console.WriteLine(QueryString("*IDN?"));
+            // Ask for the user's favorite fruit
+            var TestChoice = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("Select the test to run?")
+                    .PageSize(10)
+                    .AddChoices(new[] {
+            "Zero Carryover", "Instrument Accuracy with Calibrator",
+                    }));
+
+            // Echo the fruit back to the terminal
+            AnsiConsole.WriteLine($"DMM Details are: {QueryString("*IDN?")}");
+
 
             // Reset the DMM
             SendCommand("*RST");
@@ -143,7 +170,7 @@ namespace HP435B_Test
             }
 
             // Create a PDF report with the results
-            CreeateReport(results);
+            CreeateAccuracyTestReport(results);
 
             // Reset the intrument and return to local control
             SendCommand("*RST");
@@ -177,7 +204,7 @@ namespace HP435B_Test
             return new StatisticalValues(doubleList.Min(), doubleList.Max(), doubleList.Average(), StdDev(doubleList));
 
         }
-        private static void CreeateReport(StatisticalValues[] results)
+        private static void CreeateZeroTestReport(StatisticalValues[] results)
         {
             // Based off the SyncFusion example code for PDF generation
 
@@ -305,7 +332,7 @@ namespace HP435B_Test
             for (int i = 0; i < grid.Rows.Count; i++)
             {
                 // First column
-                if (results[i].Average >= testStageValues[i,0] && results[i].Average <= testStageValues[i, 1])
+                if (results[i].Average >= zeroTestStageValues[i,0] && results[i].Average <= zeroTestStageValues[i, 1])
                 {
                     grid.Rows[i].Cells[2].Style.BackgroundBrush = new PdfSolidBrush(Color.LightGreen);
                 }
@@ -317,7 +344,7 @@ namespace HP435B_Test
 
                 // Second column
                 int offsetValue = i + 5;
-                if (results[offsetValue].Average >= testStageValues[offsetValue, 0] && results[offsetValue].Average <= testStageValues[offsetValue, 1])
+                if (results[offsetValue].Average >= zeroTestStageValues[offsetValue, 0] && results[offsetValue].Average <= zeroTestStageValues[offsetValue, 1])
                 {
                     grid.Rows[i].Cells[6].Style.BackgroundBrush = new PdfSolidBrush(Color.LightGreen);
                 }
@@ -364,6 +391,200 @@ namespace HP435B_Test
 
             // Save the document.
             document.Save("Output"+DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf");
+
+            // Close the document.
+            document.Close(true);
+        }
+
+        private static void CreeateAccuracyTestReport(StatisticalValues[] results)
+        {
+            // Based off the SyncFusion example code for PDF generation
+
+            // Create a new PDF document.
+            PdfDocument document = new PdfDocument();
+
+            // Add a page to the document.
+            PdfPage page = document.Pages.Add();
+
+            // Create PDF graphics for the page.
+            PdfGraphics graphics = page.Graphics;
+
+            // Initialize our fonts font.
+            PdfFont titleFont = new PdfStandardFont(PdfFontFamily.Helvetica, 20, PdfFontStyle.Bold);
+            PdfFont textFont = new PdfStandardFont(PdfFontFamily.Helvetica, 10, PdfFontStyle.Bold);
+            PdfFont resultsFont = new PdfStandardFont(PdfFontFamily.Courier, 10, PdfFontStyle.Bold);
+
+            // Load the paragraph text into PdfTextElement with initialized standard font.
+            PdfTextElement textElement = new PdfTextElement("Instrument Accuracy Test", titleFont, new PdfSolidBrush(Color.Blue));
+
+            // Draw the paragraph text on page and maintain the position in PdfLayoutResult.
+            PdfLayoutResult layoutResult = textElement.Draw(page, new RectangleF(0, 0, page.GetClientSize().Width, page.GetClientSize().Height));
+
+            // Load the paragraph text into PdfTextElement with initialized standard font.
+            textElement = new PdfTextElement("SPECIFICATION: ±1% of full scale on all ranges.", textFont, new PdfSolidBrush(Color.Black));
+
+            // Draw the paragraph text on page and maintain the position in PdfLayoutResult.
+            layoutResult = textElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 10, page.GetClientSize().Width, page.GetClientSize().Height));
+
+            PdfImage image = PdfImage.FromImage(Properties.Resources.AccuracyTestSetup);
+
+            // Calculate the scale factor based on the target width
+            float scaleFactor = (float)page.GetClientSize().Width / image.Width;
+
+            // Compute the new height while maintaining the aspect ratio
+            int targetHeight = (int)(image.Height * scaleFactor);
+
+            graphics.DrawImage(image, 0, layoutResult.Bounds.Bottom + 20, page.GetClientSize().Width, targetHeight);
+
+            // Assign header text to PdfTextElement.
+            textElement.Text = "Results";
+
+            // Assign standard font to PdfTextElement.
+            textElement.Font = new PdfStandardFont(PdfFontFamily.Helvetica, 14, PdfFontStyle.Bold);
+
+            // Draw the header text on page, below the paragraph text with a height gap of 20 and maintain the position in PdfLayoutResult.
+            layoutResult = textElement.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + targetHeight + 20));
+
+            // Initialize PdfLine with start point and end point for drawing the line.
+            PdfLine line = new PdfLine(new PointF(0, 0), new PointF(page.GetClientSize().Width, 0))
+            {
+                Pen = PdfPens.DarkGray
+            };
+
+            // Draw the line on page, below the header text with a height gap of 5 and maintain the position in PdfLayoutResult.
+            layoutResult = line.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 5));
+
+            // Initialize PdfGrid for drawing the table.
+            PdfGrid grid = new PdfGrid();
+
+            // accuracyTestStageValues
+
+            List<ResultListRow> data = new List<ResultListRow>();
+            data.Add(new ResultListRow("Fully CCW", ToEngineeringFormat.Convert(accuracyTestStageValues[0, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[0].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[0, 1], 4, "Vdc"), "5 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[5, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[5].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[5, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("1 Step CW", ToEngineeringFormat.Convert(accuracyTestStageValues[1,0], 4, "Vdc"), ToEngineeringFormat.Convert(results[1].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[1, 1], 4, "Vdc"), "6 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[6, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[6].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[6, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("2 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[2,0], 4, "Vdc"), ToEngineeringFormat.Convert(results[2].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[2, 1], 4, "Vdc"), "7 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[7, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[7].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[7, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("3 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[3,0], 4, "Vdc"), ToEngineeringFormat.Convert(results[3].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[3, 1], 4, "Vdc"), "8 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[8, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[8].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[8, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("4 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[4,0], 4, "Vdc"), ToEngineeringFormat.Convert(results[4].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[4, 1], 4, "Vdc"), "Fully CW", ToEngineeringFormat.Convert(accuracyTestStageValues[9, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[9].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[9, 1], 4, "Vdc")));
+
+            // Add list to IEnumerable.
+            IEnumerable<object> dataTable = data;
+
+            // Assign the DataTable as data source to grid.
+            grid.DataSource = dataTable;
+
+            //Using the Header collection
+            grid.Headers[0].Cells[0].Value = "Range Switch Position";
+            grid.Headers[0].Cells[1].Value = "Results";
+            grid.Headers[0].Cells[4].Value = "Range Switch Position";
+            grid.Headers[0].Cells[5].Value = "Results";
+
+            // OSM Grid Layout
+            // 8 columns, 8 rows, Header - Cell 0, rowspan 2 - Cell 1, columnspan 3 - Cell 4, rowspan 2 - Cell 5, columnspan 3
+            grid.Headers[0].Cells[0].RowSpan = 2;
+            grid.Headers[0].Cells[0].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+            grid.Headers[0].Cells[1].ColumnSpan = 3;
+            grid.Headers[0].Cells[1].StringFormat = new PdfStringFormat(PdfTextAlignment.Center);
+            grid.Headers[0].Cells[4].RowSpan = 2;
+            grid.Headers[0].Cells[4].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+            grid.Headers[0].Cells[5].ColumnSpan = 3;
+            grid.Headers[0].Cells[5].StringFormat = new PdfStringFormat(PdfTextAlignment.Center);
+
+            //Add new row to the header
+            PdfGridRow[] header = grid.Headers.Add(1);
+            header[1].Cells[0].Value = "";
+            header[1].Cells[1].Value = "Min";
+            header[1].Cells[1].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+            header[1].Cells[2].Value = "Actual";
+            header[1].Cells[2].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+            header[1].Cells[3].Value = "Max";
+            header[1].Cells[3].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+            header[1].Cells[4].Value = "";
+            header[1].Cells[5].Value = "Min";
+            header[1].Cells[5].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+            header[1].Cells[6].Value = "Actual";
+            header[1].Cells[6].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+            header[1].Cells[7].Value = "Max";
+            header[1].Cells[7].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+
+            // Set vertical alignment for a specific column
+            PdfStringFormat resultCellFormat = new PdfStringFormat
+            {
+                Alignment = PdfTextAlignment.Center
+            };
+
+            foreach (PdfGridRow gridRow in grid.Rows)
+            {
+                gridRow.Cells[1].Style.StringFormat = resultCellFormat;
+                gridRow.Cells[2].Style.StringFormat = resultCellFormat;
+                gridRow.Cells[3].Style.StringFormat = resultCellFormat;
+                gridRow.Cells[5].Style.StringFormat = resultCellFormat;
+                gridRow.Cells[6].Style.StringFormat = resultCellFormat;
+                gridRow.Cells[7].Style.StringFormat = resultCellFormat;
+            }
+
+            // Set pass/fail colours
+            for (int i = 0; i < grid.Rows.Count; i++)
+            {
+                // First column
+                if (results[i].Average >= accuracyTestStageValues[i, 0] && results[i].Average <= accuracyTestStageValues[i, 1])
+                {
+                    grid.Rows[i].Cells[2].Style.BackgroundBrush = new PdfSolidBrush(Color.LightGreen);
+                }
+                else
+                {
+                    grid.Rows[i].Cells[2].Style.BackgroundBrush = new PdfSolidBrush(Color.Red);
+                    grid.Rows[i].Cells[2].Style.TextBrush = new PdfSolidBrush(Color.White);
+                }
+
+                // Second column
+                int offsetValue = i + 5;
+                if (results[offsetValue].Average >= accuracyTestStageValues[offsetValue, 0] && results[offsetValue].Average <= accuracyTestStageValues[offsetValue, 1])
+                {
+                    grid.Rows[i].Cells[6].Style.BackgroundBrush = new PdfSolidBrush(Color.LightGreen);
+                }
+                else
+                {
+                    grid.Rows[i].Cells[6].Style.BackgroundBrush = new PdfSolidBrush(Color.Red);
+                    grid.Rows[i].Cells[6].Style.TextBrush = new PdfSolidBrush(Color.White);
+                }
+            }
+            // Set the grid cell padding.
+            grid.Style.CellPadding.All = 5;
+
+            // Draw the table in page, below the line with a height gap of 20.
+            layoutResult = grid.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 20));
+
+            // Create the detailed results section
+            textElement.Text = "Detailed Position Results";
+
+            // Assign standard font to PdfTextElement.
+            textElement.Font = new PdfStandardFont(PdfFontFamily.Helvetica, 14, PdfFontStyle.Bold);
+
+            // Draw the header text on page, below the paragraph text with a height gap of 20 and maintain the position in PdfLayoutResult.
+            layoutResult = textElement.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 20));
+
+            // Initialize PdfLine with start point and end point for drawing the line.
+            line = new PdfLine(new PointF(0, 0), new PointF(page.GetClientSize().Width, 0))
+            {
+                Pen = PdfPens.DarkGray
+            };
+
+            // Draw the line on page, below the header text with a height gap of 5 and maintain the position in PdfLayoutResult.
+            layoutResult = line.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 5));
+
+            // Detailed result output
+            for (int i = 0; i < testStages.Length; i++)
+            {
+
+                // Load the paragraph text into PdfTextElement with initialized text font.
+                PdfTextElement resultElement = new PdfTextElement(testStages[i].PadRight(10) + " - " + results[i].ToEngineeringString(), resultsFont, new PdfSolidBrush(Color.Black));
+
+                // Draw the paragraph text on page and maintain the position in PdfLayoutResult.
+                layoutResult = resultElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 5, page.GetClientSize().Width, page.GetClientSize().Height));
+            }
+
+            // Save the document.
+            document.Save("Output" + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf");
 
             // Close the document.
             document.Close(true);
