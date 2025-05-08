@@ -12,6 +12,7 @@ using System.Drawing;
 using System.Data;
 using Spectre.Console;
 using Color = System.Drawing.Color;
+using System.Diagnostics;
 
 namespace HP435B_Test
 {
@@ -19,17 +20,17 @@ namespace HP435B_Test
     {
         public static GpibSession gpibSession;
         public static NationalInstruments.Visa.ResourceManager resManager;
-        public static int gpibIntAddress = 16;
+        public static int gpibIntAddress = 14; // 34401A
         public static string gpibAddress = string.Format("GPIB0::{0}::INSTR", gpibIntAddress);
         public static SemaphoreSlim srqWait = new SemaphoreSlim(0, 1); // use a semaphore to wait for the SRQ events
 
         public static readonly string[] testStages = { "Fully CCW", "1 Step CW", "2 Steps CW", "3 Steps CW", "4 Steps CW", "5 Steps CW", "6 Steps CW", "7 Steps CW", "8 Steps CW", "Fully CW" };
-        public static readonly double[,] zeroTestStageValues = 
+        public static readonly double[,] zeroTestStageValues =
         {
             {-15E-3, 15E-3},
             {-17E-3, 17E-3},
             {-14E-3, 14E-3},
-            {-11E-3, 11E-3}, 
+            {-11E-3, 11E-3},
             {-8E-3, 8E-3},
             {-5E-3, 5E-3},
             {-5E-3, 5E-3},
@@ -75,7 +76,7 @@ namespace HP435B_Test
 
             public string ToEngineeringString()
             {
-                return $"Min: {ToEngineeringFormat.Convert(Min,3,"Vdc").PadRight(9)}, Max: {ToEngineeringFormat.Convert(Max, 3, "Vdc").PadRight(9)}, Average: {ToEngineeringFormat.Convert(Average, 3, "Vdc").PadRight(9)}, StdDev: {ToEngineeringFormat.Convert(StdDev, 3, "Vdc").PadRight(9)}";
+                return $"Min: {ToEngineeringFormat.Convert(Min, 3, "Vdc").PadRight(9)}, Max: {ToEngineeringFormat.Convert(Max, 3, "Vdc").PadRight(9)}, Average: {ToEngineeringFormat.Convert(Average, 3, "Vdc").PadRight(9)}, StdDev: {ToEngineeringFormat.Convert(StdDev, 3, "Vdc").PadRight(9)}";
             }
 
         }
@@ -112,7 +113,8 @@ namespace HP435B_Test
 
         static void Main(string[] args)
         {
-            int testPoints = 100; // Number of test points to take
+            int testPoints = 100; // Number of test points to take - 34401A max ~500
+            bool testExit = false;
 
             StatisticalValues[] results = new StatisticalValues[10];
 
@@ -132,79 +134,142 @@ namespace HP435B_Test
                 new SelectionPrompt<string>()
                     .Title("Select the test to run?")
                     .PageSize(10)
-                    .AddChoices(new[] {
-            "Zero Carryover", "Instrument Accuracy with Calibrator",
-                    }));
+                    .AddChoices(new[] {"Zero Carryover", "Instrument Accuracy with Calibrator","Exit"})
+                    );
 
-            // Echo the fruit back to the terminal
-            AnsiConsole.WriteLine($"DMM Details are: {QueryString("*IDN?")}");
-
-
-            // Reset the DMM
-            SendCommand("*RST");
-
-            // Set the DMM to generate an SRQ when done
-            SendCommand(":status: preset");
-            SendCommand("*CLS");
-            SendCommand(":status:measurement:enable 512");
-            SendCommand("*sre 1");
-
-            // Set the DMM to DC Voltage mode and the range to 200mV
-            SendCommand(":SENSe:FUNCtion \'VOLTage:DC\'");
-            SendCommand(":SENSe:VOLTage:DC:RANGe 0.2");
-
-            // Set the DMM to trigger for specified measurements
-            SendCommand(":sample:count " + testPoints);
-            SendCommand(":trigger:source bus");
-            SendCommand(":TRACe:POINts " + testPoints);
-            SendCommand(":TRACe:FEED SENSe1");
-
-            // Iterate through the test stages
-            for (int i = 0; i < testStages.Length; i++)
+            while (TestChoice != "Exit")
             {
-                // Prompt the user to set the range switch position
-                DisplayTextPause(testStages[i]);
+                // Echo the fruit back to the terminal
+                AnsiConsole.WriteLine($"DMM Details are: {QueryString("*IDN?")}");
 
-                // Get the data for the current stage
-                results[i] = GetData(testStages[i]);
+                // Reset the DMM
+                SendCommand("*RST;*CLS");
+
+                // Configure standard event register
+                SendCommand("*ESE 1;*SRE 32");
+
+                // Assure syncronization
+                var srqSyncString = QueryString("*OPC?");
+
+                // Set the DMM to DC Voltage mode and the range to 1V
+                SendCommand(":SENSe:FUNCtion \'VOLTage:DC\'");
+                SendCommand(":SENSe:VOLTage:DC:RANGe 1");
+
+                // Set the DMM input resistance to 10 G
+                SendCommand("INPut:IMPedance:AUTO ON");
+
+                // Set the DMM to trigger for specified measurements
+                SendCommand("TRIG:COUN " + testPoints);
+
+                // Define a Spectre table to display the test reults
+                var table = new Table()
+                    .AddColumn("Range Switch Position")
+                    .AddColumn("Min")
+                    .AddColumn("Actual")
+                    .AddColumn("Max")
+                    .Centered();
+
+                table.Title = new TableTitle($"{TestChoice}");
+
+                AnsiConsole.Live(table).Start(ctx =>
+                {
+                    // Iterate through the test stages
+                    for (int i = 0; i < testStages.Length; i++)
+                    {
+                        // Alert the user to the test stage and display a table caption
+                        Console.Beep(1000, 500);
+                        var caption = new TableTitle($"Testing {testStages[i]} - Set DUT and hit <Enter>");
+                        var captionStyle = new Style(Spectre.Console.Color.White, Spectre.Console.Color.Black, Decoration.Bold | Decoration.SlowBlink);
+                        caption.Style = captionStyle;
+                        table.Caption = caption;
+
+                        ctx.Refresh();
+
+                        // Prompt the user to set the range switch position
+                        DisplayTextPause(testStages[i]);
+
+                        caption = new TableTitle($"Testing {testStages[i]} - Testing");
+                        caption.Style = captionStyle;
+                        table.Caption = caption;
+                        ctx.Refresh();
+
+                        // Get the data for the current stage
+                        results[i] = GetData(testStages[i]);
+
+                        table.AddRow(testStages[i], ToEngineeringFormat.Convert(results[i].Min, 3, "Vdc"), ToEngineeringFormat.Convert(results[i].Average, 3, "Vdc"), ToEngineeringFormat.Convert(results[i].Max, 3, "Vdc"));
+
+                        ctx.Refresh();
+                    }
+                });
+
+                string reportFilename = string.Empty;
+
+                // Create a PDF report with the results
+                switch (TestChoice)
+                {
+                    case "Zero Carryover":
+                        // Create a PDF report with the results
+                        reportFilename = CreeateZeroTestReport(results);
+                        break;
+                    case "Instrument Accuracy with Calibrator":
+                        reportFilename = CreeateAccuracyTestReport(results);
+                        break;
+                    default:
+                        break;
+                }
+
+                // Reset the intrument and return to local control
+                SendCommand("*CLS;*RST");
+
+                // Ask for the user action
+                TestChoice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("Open the report PDF?")
+                        .PageSize(10)
+                        .AddChoices(new[] { "Yes", "No",})
+                        );
+
+                // Open the report if desired
+                if (TestChoice == "Yes")
+                    Process.Start("explorer.exe", reportFilename);
+
+                // Clear the screen
+                AnsiConsole.Clear();
+
+                // Ask for the user action
+                TestChoice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("Select the test to run?")
+                        .PageSize(10)
+                        .AddChoices(new[] { "Zero Carryover", "Instrument Accuracy with Calibrator", "Exit" })
+                        );
             }
 
-            // Create a PDF report with the results
-            CreeateAccuracyTestReport(results);
-
-            // Reset the intrument and return to local control
-            SendCommand("*RST");
             gpibSession.SendRemoteLocalCommand(GpibInstrumentRemoteLocalMode.GoToLocalDeassertRen);
         }
 
         private static StatisticalValues GetData(string stage)
         {
-            // Clear the trace and status bytes for next measurement
-            var result = QueryString(":status:measurement?");
-            SendCommand(":TRACe:CLEar");
-            SendCommand(":TRACe:FEED:CONTrol NEXT");
+            // Take the measurement
             SendCommand(":INIT");
-
-            // Trigger the reading
-            gpibSession.AssertTrigger();
+            SendCommand("*OPC"); // 34401A
 
             // Wait for the data to be available
-            Console.WriteLine("Waiting for data");
             srqWait.Wait();
 
-            Console.WriteLine("Retrieving data");
-            result = QueryString(":TRACe:DATA?");
+            //result = QueryString(":TRACe:DATA?"); // 2015THD
+            var result = QueryString(":FETCh?"); // 34401A
 
             // Convert the string to a list of doubles
             List<double> doubleList = ConvertStringToDoubleList(result);
 
             // Print the results
-            PrintMeasurementResults("Zero Carryover - " + stage, doubleList);
+            //PrintMeasurementResults("Zero Carryover - " + stage, doubleList);
 
             return new StatisticalValues(doubleList.Min(), doubleList.Max(), doubleList.Average(), StdDev(doubleList));
 
         }
-        private static void CreeateZeroTestReport(StatisticalValues[] results)
+        private static string CreeateZeroTestReport(StatisticalValues[] results)
         {
             // Based off the SyncFusion example code for PDF generation
 
@@ -299,7 +364,7 @@ namespace HP435B_Test
             PdfGridRow[] header = grid.Headers.Add(1);
             header[1].Cells[0].Value = "";
             header[1].Cells[1].Value = "Min (mVdc)";
-            header[1].Cells[1].StringFormat = new PdfStringFormat(PdfTextAlignment.Center,PdfVerticalAlignment.Middle);
+            header[1].Cells[1].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
             header[1].Cells[2].Value = "Actual";
             header[1].Cells[2].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
             header[1].Cells[3].Value = "Max (mVdc)";
@@ -332,7 +397,7 @@ namespace HP435B_Test
             for (int i = 0; i < grid.Rows.Count; i++)
             {
                 // First column
-                if (results[i].Average >= zeroTestStageValues[i,0] && results[i].Average <= zeroTestStageValues[i, 1])
+                if (results[i].Average >= zeroTestStageValues[i, 0] && results[i].Average <= zeroTestStageValues[i, 1])
                 {
                     grid.Rows[i].Cells[2].Style.BackgroundBrush = new PdfSolidBrush(Color.LightGreen);
                 }
@@ -390,13 +455,16 @@ namespace HP435B_Test
             }
 
             // Save the document.
-            document.Save("Output"+DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf");
+            var fileName = "ZeroCarryoverTestReport" + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf";
+            document.Save(fileName);
 
             // Close the document.
             document.Close(true);
+
+            return fileName;
         }
 
-        private static void CreeateAccuracyTestReport(StatisticalValues[] results)
+        private static string CreeateAccuracyTestReport(StatisticalValues[] results)
         {
             // Based off the SyncFusion example code for PDF generation
 
@@ -461,10 +529,10 @@ namespace HP435B_Test
 
             List<ResultListRow> data = new List<ResultListRow>();
             data.Add(new ResultListRow("Fully CCW", ToEngineeringFormat.Convert(accuracyTestStageValues[0, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[0].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[0, 1], 4, "Vdc"), "5 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[5, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[5].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[5, 1], 4, "Vdc")));
-            data.Add(new ResultListRow("1 Step CW", ToEngineeringFormat.Convert(accuracyTestStageValues[1,0], 4, "Vdc"), ToEngineeringFormat.Convert(results[1].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[1, 1], 4, "Vdc"), "6 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[6, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[6].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[6, 1], 4, "Vdc")));
-            data.Add(new ResultListRow("2 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[2,0], 4, "Vdc"), ToEngineeringFormat.Convert(results[2].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[2, 1], 4, "Vdc"), "7 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[7, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[7].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[7, 1], 4, "Vdc")));
-            data.Add(new ResultListRow("3 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[3,0], 4, "Vdc"), ToEngineeringFormat.Convert(results[3].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[3, 1], 4, "Vdc"), "8 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[8, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[8].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[8, 1], 4, "Vdc")));
-            data.Add(new ResultListRow("4 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[4,0], 4, "Vdc"), ToEngineeringFormat.Convert(results[4].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[4, 1], 4, "Vdc"), "Fully CW", ToEngineeringFormat.Convert(accuracyTestStageValues[9, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[9].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[9, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("1 Step CW", ToEngineeringFormat.Convert(accuracyTestStageValues[1, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[1].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[1, 1], 4, "Vdc"), "6 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[6, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[6].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[6, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("2 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[2, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[2].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[2, 1], 4, "Vdc"), "7 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[7, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[7].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[7, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("3 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[3, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[3].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[3, 1], 4, "Vdc"), "8 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[8, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[8].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[8, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("4 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[4, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[4].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[4, 1], 4, "Vdc"), "Fully CW", ToEngineeringFormat.Convert(accuracyTestStageValues[9, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[9].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[9, 1], 4, "Vdc")));
 
             // Add list to IEnumerable.
             IEnumerable<object> dataTable = data;
@@ -584,10 +652,13 @@ namespace HP435B_Test
             }
 
             // Save the document.
-            document.Save("Output" + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf");
+            var fileName = "ZeroCarryoverTestReport" + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf";
+            document.Save(fileName);
 
             // Close the document.
             document.Close(true);
+
+            return fileName;
         }
 
         private static void PrintMeasurementResults(string title, List<double> doubleList)
@@ -614,11 +685,13 @@ namespace HP435B_Test
             {
                 SendCommand(":Display:Text:Data \'" + text + "\'");
             }
-            SendCommand(":Display:Text:STate 1");
-            Console.WriteLine(text);
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
-            SendCommand(":Display:Text:STate 0");
+            //SendCommand(":Display:Text:STate 1"); //2015THD
+
+            // Wait for the user to press Enter
+            while (Console.ReadKey(true).Key != ConsoleKey.Enter) ;
+
+            //SendCommand(":Display:Text:STate 0"); // 2015THD
+            SendCommand(":Display:Text:CLEar");
         }
         public static double StdDev(IEnumerable<double> values)
         {
@@ -661,25 +734,15 @@ namespace HP435B_Test
 
         public static void SRQHandler(object sender, Ivi.Visa.VisaEventArgs e)
         {
-            /* Status Byte Bit Values
-             * Bit 7 - OSB - Operation Summary Bit
-             * Bit 6 - RQS - Request for Service
-             * Bit 5 - ESB - Event Summary Bit
-             * Bit 4 - MAV - Message Available
-             * Bit 3 - QSB - Questionable Summary Bit
-             * Bit 2 - EAV = Error Available
-             * Bit 1 - Not Used
-             * Bit 0 - MSB - Measurement Summary Bit
-             */
-
             // Read the Status Byte
-            // TODO: Check the status byte for the measurement summary bit
             var gbs = (GpibSession)sender;
             StatusByteFlags sb = gbs.ReadStatusByte();
 
-            Console.WriteLine($"SRQHandler - Status Byte: {sb} - Note: User0 is the Measurement Summary Bit");
+            Debug.WriteLine($"SRQHandler - Status Byte: {sb}");
 
             gpibSession.DiscardEvents(EventType.ServiceRequest);
+
+            SendCommand("*CLS");
 
             srqWait.Release();
         }
