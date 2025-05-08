@@ -114,7 +114,6 @@ namespace HP435B_Test
         static void Main(string[] args)
         {
             int testPoints = 100; // Number of test points to take - 34401A max ~500
-            bool testExit = false;
 
             StatisticalValues[] results = new StatisticalValues[10];
 
@@ -652,7 +651,7 @@ namespace HP435B_Test
             }
 
             // Save the document.
-            var fileName = "ZeroCarryoverTestReport" + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf";
+            var fileName = "AccuracyTestReport" + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf";
             document.Save(fileName);
 
             // Close the document.
