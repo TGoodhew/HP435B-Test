@@ -179,7 +179,6 @@ namespace HP435B_Test
                 {
                     case "Zero Carryover":
                         TestRun(results, TestChoice, testRangeStages);
-                        // Create a PDF report with the results
                         reportFilename = CreeateZeroTestReport(results);
                         break;
                     case "Instrument Accuracy with Calibrator":
@@ -784,7 +783,7 @@ namespace HP435B_Test
 
             for (int i = 0; i < testCalibrationStages.Length / 2; i++)
             {
-                data.Add(new ResultListRow(testCalibrationStages[i], ToEngineeringFormat.Convert(accuracyTestStageValues[0, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[0].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[0, 1], 4, "Vdc"), testCalibrationStages[i + 8], ToEngineeringFormat.Convert(accuracyTestStageValues[5, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[5].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[5, 1], 4, "Vdc")));
+                data.Add(new ResultListRow(testCalibrationStages[i], ToEngineeringFormat.Convert(calibrationFactorTestStageValues[i, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[0].Average, 4, "Vdc"), ToEngineeringFormat.Convert(calibrationFactorTestStageValues[i, 1], 4, "Vdc"), testCalibrationStages[i + 8], ToEngineeringFormat.Convert(calibrationFactorTestStageValues[i+8, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[i+8].Average, 4, "Vdc"), ToEngineeringFormat.Convert(calibrationFactorTestStageValues[i+8, 1], 4, "Vdc")));
             }
             // Add list to IEnumerable.
             IEnumerable<object> dataTable = data;
