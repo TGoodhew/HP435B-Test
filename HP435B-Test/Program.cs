@@ -576,11 +576,11 @@ namespace HP435B_Test
             // accuracyTestStageValues
 
             List<ResultListRow> data = new List<ResultListRow>();
-            data.Add(new ResultListRow("Fully CCW", ToEngineeringFormat.Convert(accuracyTestStageValues[0, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[0].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[0, 1], 4, "Vdc"), "5 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[5, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[5].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[5, 1], 4, "Vdc")));
-            data.Add(new ResultListRow("1 Step CW", ToEngineeringFormat.Convert(accuracyTestStageValues[1, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[1].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[1, 1], 4, "Vdc"), "6 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[6, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[6].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[6, 1], 4, "Vdc")));
-            data.Add(new ResultListRow("2 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[2, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[2].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[2, 1], 4, "Vdc"), "7 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[7, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[7].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[7, 1], 4, "Vdc")));
-            data.Add(new ResultListRow("3 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[3, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[3].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[3, 1], 4, "Vdc"), "8 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[8, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[8].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[8, 1], 4, "Vdc")));
-            data.Add(new ResultListRow("4 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[4, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[4].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[4, 1], 4, "Vdc"), "Fully CW", ToEngineeringFormat.Convert(accuracyTestStageValues[9, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[9].Average, 3, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[9, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("Fully CCW", ToEngineeringFormat.Convert(accuracyTestStageValues[0, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[0].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[0, 1], 4, "Vdc"), "5 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[5, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[5].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[5, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("1 Step CW", ToEngineeringFormat.Convert(accuracyTestStageValues[1, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[1].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[1, 1], 4, "Vdc"), "6 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[6, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[6].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[6, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("2 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[2, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[2].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[2, 1], 4, "Vdc"), "7 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[7, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[7].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[7, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("3 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[3, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[3].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[3, 1], 4, "Vdc"), "8 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[8, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[8].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[8, 1], 4, "Vdc")));
+            data.Add(new ResultListRow("4 Steps CW", ToEngineeringFormat.Convert(accuracyTestStageValues[4, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[4].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[4, 1], 4, "Vdc"), "Fully CW", ToEngineeringFormat.Convert(accuracyTestStageValues[9, 0], 4, "Vdc"), ToEngineeringFormat.Convert(results[9].Average, 4, "Vdc"), ToEngineeringFormat.Convert(accuracyTestStageValues[9, 1], 4, "Vdc")));
 
             // Add list to IEnumerable.
             IEnumerable<object> dataTable = data;
@@ -891,17 +891,6 @@ namespace HP435B_Test
             // Draw the line on page, below the header text with a height gap of 5 and maintain the position in PdfLayoutResult.
             layoutResult = line.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 5));
 
-            //// Detailed result output
-            //for (int i = 0; i < testCalibrationStages.Length; i++)
-            //{
-
-            //    // Load the paragraph text into PdfTextElement with initialized text font.
-            //    PdfTextElement resultElement = new PdfTextElement(testCalibrationStages[i].PadRight(10) + " - " + results[i].ToEngineeringString(), resultsFont, new PdfSolidBrush(Color.Black));
-
-            //    // Draw the paragraph text on page and maintain the position in PdfLayoutResult.
-            //    layoutResult = resultElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 5, page.GetClientSize().Width, page.GetClientSize().Height), layoutFormat);
-            //}
-
             string detailedResults = string.Empty;
 
             // Detailed result output
@@ -950,12 +939,10 @@ namespace HP435B_Test
             {
                 SendCommand(":Display:Text:Data \'" + text + "\'");
             }
-            //SendCommand(":Display:Text:STate 1"); //2015THD
 
             // Wait for the user to press Enter
             while (Console.ReadKey(true).Key != ConsoleKey.Enter) ;
 
-            //SendCommand(":Display:Text:STate 0"); // 2015THD
             SendCommand(":Display:Text:CLEar");
         }
         public static double StdDev(IEnumerable<double> values)
