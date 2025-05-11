@@ -73,6 +73,16 @@ namespace HP435B_Test.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap CalibrationTestSetup {
+            get {
+                object obj = ResourceManager.GetObject("CalibrationTestSetup", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap TestSetup {
             get {
                 object obj = ResourceManager.GetObject("TestSetup", resourceCulture);

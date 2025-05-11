@@ -88,7 +88,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\TestSetup.png" />
-    <Content Include="AccuracyTestSetup.png" />
+    <Content Include="Resources\AccuracyTestSetup.png" />
+    <None Include="Resources\CalibrationTestSetup.png" />
     <Content Include="TestSetup.png" />
   </ItemGroup>
   <ItemGroup>
