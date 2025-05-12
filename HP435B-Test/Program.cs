@@ -136,7 +136,7 @@ namespace HP435B_Test
 
         static void Main(string[] args)
         {
-            int testPoints = 10; // Number of test points to take - 34401A max ~500
+            int testPoints = 100; // Number of test points to take - 34401A max ~500
 
             StatisticalValues[] results = new StatisticalValues[16];
 
