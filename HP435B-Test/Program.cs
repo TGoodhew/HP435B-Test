@@ -137,7 +137,7 @@ namespace HP435B_Test
 
         static void Main(string[] args)
         {
-            int testPoints = 10; // Number of test points to take - 34401A max ~500
+            int testPoints = 100; // Number of test points to take - 34401A max ~500
 
             StatisticalValues[] results = new StatisticalValues[16];
 
@@ -481,14 +481,18 @@ namespace HP435B_Test
             line = new PdfLine(new PointF(0, 0), new PointF(page.GetClientSize().Width, 0)) { Pen = PdfPens.DarkGray };
             layoutResult = line.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 5));
 
-            // BUG: Row 85 is still writing on the main page but row 86 writes on the second page - need to investigate why pagination is failing. Maybe bring the detailed results into 1 string rather than seperate elements.
+            string detailedResults = string.Empty;
+
+            // Detailed result output
             for (int i = 0; i < stageNames.Length; i++)
             {
-                PdfTextElement resultElement = new PdfTextElement(
-                    stageNames[i].PadRight(10) + " - " + results[i].ToEngineeringString(),
-                    resultsFont, new PdfSolidBrush(Color.Black));
-                layoutResult = resultElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 5, page.GetClientSize().Width, page.GetClientSize().Height), layoutFormat);
+                // Load the text into detailedResults.
+                detailedResults += stageNames[i].PadRight(10) + " - " + results[i].ToEngineeringString() + "\n";
             }
+
+            PdfTextElement resultElement = new PdfTextElement(detailedResults, resultsFont, new PdfSolidBrush(Color.Black));
+
+            layoutResult = resultElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 5, page.GetClientSize().Width, page.GetClientSize().Height), layoutFormat);
 
             var fileName = /*Directory.GetCurrentDirectory().ToString() + "\\"+*/ filePrefix + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf";
             document.Save(fileName);
