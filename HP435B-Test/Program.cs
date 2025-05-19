@@ -141,117 +141,126 @@ namespace HP435B_Test
 
             StatisticalValues[] results = new StatisticalValues[16];
 
-            // Setup the GPIB connection via the ResourceManager
-            resManager = new NationalInstruments.Visa.ResourceManager();
-
-            // Create a GPIB session for the specified address
-            gpibSession = (GpibSession)resManager.Open(gpibAddress);
-            gpibSession.TimeoutMilliseconds = 8000; // Set the timeout to be 4s
-            gpibSession.TerminationCharacterEnabled = true;
-            gpibSession.Clear(); // Clear the session
-
-            gpibSession.ServiceRequest += SRQHandler;
-
-            // Fill calibration factor array
-            for (int i = 0, num = 100; num >= 85; i++, num--)
+            try
             {
-                testCalibrationStages[i] = num.ToString();
-            }
+                // Setup the GPIB connection via the ResourceManager
+                resManager = new NationalInstruments.Visa.ResourceManager();
 
-            // Ask for the user's favorite fruit
-            var TestChoice = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title("Select the test to run?")
-                    .PageSize(10)
-                    .AddChoices(new[] { "Zero Carryover", "Instrument Accuracy with Calibrator", "Calibration Factor", "Exit" })
-                    );
+                // Create a GPIB session for the specified address
+                gpibSession = (GpibSession)resManager.Open(gpibAddress);
+                gpibSession.TimeoutMilliseconds = 8000; // Set the timeout to be 4s
+                gpibSession.TerminationCharacterEnabled = true;
+                gpibSession.Clear(); // Clear the session
 
-            while (TestChoice != "Exit")
-            {
-                // Echo the fruit back to the terminal
-                AnsiConsole.WriteLine($"DMM Details are: {QueryString("*IDN?")}");
+                gpibSession.ServiceRequest += SRQHandler;
 
-                SetupDMM(testPoints);
-
-                string reportFilename = string.Empty;
-
-                // Create a PDF report with the results
-                switch (TestChoice)
+                // Fill calibration factor array
+                for (int i = 0, num = 100; num >= 85; i++, num--)
                 {
-                    case "Zero Carryover":
-                        TestRun(results, TestChoice, testRangeStages);
-                        // Zero Carryover
-                        reportFilename = CreateTestReport(
-                            "Zero Carryover Test",
-                            "SPECIFICATION: ±0.5% of full scale when zeroed in the most sensitive range.",
-                            Properties.Resources.TestSetup,
-                            testRangeStages,
-                            zeroTestStageValues,
-                            results,
-                            "ZeroCarryoverTestReport",
-                            "Range Switch Position",
-                            4);
-                        break;
-                    case "Instrument Accuracy with Calibrator":
-                        TestRun(results, TestChoice, testRangeStages);
-                        // Instrument Accuracy
-                        reportFilename = CreateTestReport(
-                            "Instrument Accuracy Test",
-                            "SPECIFICATION: ±1% of full scale on all ranges.",
-                            Properties.Resources.AccuracyTestSetup,
-                            testRangeStages,
-                            accuracyTestStageValues,
-                            results,
-                            "AccuracyTestReport",
-                            "Range Switch Position",
-                            4);
-                        break;
-                    case "Calibration Factor":
-                        TestRun(results, TestChoice, testCalibrationStages);
-                        // Calibration Factor
-                        reportFilename = CreateTestReport(
-                            "Calibration Factor Test",
-                            "SPECIFICATION: 16-position switch normailizes meter reading to account for calibration factor or effective efficiency. Range 85% to 100% in 1% steps.",
-                            Properties.Resources.CalibrationTestSetup,
-                            testCalibrationStages,
-                            calibrationFactorTestStageValues,
-                            results,
-                            "CalibrationFactorTestReport",
-                            "Calibration Switch Position",
-                            4);
-                        break;
-                    default:
-                        break;
+                    testCalibrationStages[i] = num.ToString();
                 }
 
-                // Reset the intrument and return to local control
-                SendCommand("*CLS;*RST");
-
-                // Ask for the user action
-                TestChoice = AnsiConsole.Prompt(
-                    new SelectionPrompt<string>()
-                        .Title("Open the report PDF?")
-                        .PageSize(10)
-                        .AddChoices(new[] { "Yes", "No", })
-                        );
-
-                // Open the report if desired
-                if (TestChoice == "Yes")
-                    Process.Start("explorer.exe", reportFilename);
-
-                // Clear the screen
-                AnsiConsole.Clear();
-
-                // Ask for the user action
-                TestChoice = AnsiConsole.Prompt(
+                // Ask for the user's favorite fruit
+                var TestChoice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
                         .Title("Select the test to run?")
                         .PageSize(10)
                         .AddChoices(new[] { "Zero Carryover", "Instrument Accuracy with Calibrator", "Calibration Factor", "Exit" })
                         );
-            }
 
-            gpibSession.SendRemoteLocalCommand(GpibInstrumentRemoteLocalMode.GoToLocalDeassertRen);
+                while (TestChoice != "Exit")
+                {
+                    // Echo the fruit back to the terminal
+                    AnsiConsole.WriteLine($"DMM Details are: {QueryString("*IDN?")}");
+
+                    SetupDMM(testPoints);
+
+                    string reportFilename = string.Empty;
+
+                    // Create a PDF report with the results
+                    switch (TestChoice)
+                    {
+                        case "Zero Carryover":
+                            TestRun(results, TestChoice, testRangeStages);
+                            // Zero Carryover
+                            reportFilename = CreateTestReport(
+                                "Zero Carryover Test",
+                                "SPECIFICATION: ±0.5% of full scale when zeroed in the most sensitive range.",
+                                Properties.Resources.TestSetup,
+                                testRangeStages,
+                                zeroTestStageValues,
+                                results,
+                                "ZeroCarryoverTestReport",
+                                "Range Switch Position",
+                                4);
+                            break;
+                        case "Instrument Accuracy with Calibrator":
+                            TestRun(results, TestChoice, testRangeStages);
+                            // Instrument Accuracy
+                            reportFilename = CreateTestReport(
+                                "Instrument Accuracy Test",
+                                "SPECIFICATION: ±1% of full scale on all ranges.",
+                                Properties.Resources.AccuracyTestSetup,
+                                testRangeStages,
+                                accuracyTestStageValues,
+                                results,
+                                "AccuracyTestReport",
+                                "Range Switch Position",
+                                4);
+                            break;
+                        case "Calibration Factor":
+                            TestRun(results, TestChoice, testCalibrationStages);
+                            // Calibration Factor
+                            reportFilename = CreateTestReport(
+                                "Calibration Factor Test",
+                                "SPECIFICATION: 16-position switch normailizes meter reading to account for calibration factor or effective efficiency. Range 85% to 100% in 1% steps.",
+                                Properties.Resources.CalibrationTestSetup,
+                                testCalibrationStages,
+                                calibrationFactorTestStageValues,
+                                results,
+                                "CalibrationFactorTestReport",
+                                "Calibration Switch Position",
+                                4);
+                            break;
+                        default:
+                            break;
+                    }
+
+                    // Reset the intrument and return to local control
+                    SendCommand("*CLS;*RST");
+
+                    // Ask for the user action
+                    TestChoice = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .Title("Open the report PDF?")
+                            .PageSize(10)
+                            .AddChoices(new[] { "Yes", "No", })
+                            );
+
+                    // Open the report if desired
+                    if (TestChoice == "Yes")
+                        Process.Start("explorer.exe", reportFilename);
+
+                    // Clear the screen
+                    AnsiConsole.Clear();
+
+                    // Ask for the user action
+                    TestChoice = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .Title("Select the test to run?")
+                            .PageSize(10)
+                            .AddChoices(new[] { "Zero Carryover", "Instrument Accuracy with Calibrator", "Calibration Factor", "Exit" })
+                            );
+                }
+
+                gpibSession.SendRemoteLocalCommand(GpibInstrumentRemoteLocalMode.GoToLocalDeassertRen);
+            }
+            finally
+            {                 
+                // Close the GPIB session
+                gpibSession?.Dispose();
+                resManager?.Dispose();
+            }
         }
 
         private static void TestRun(StatisticalValues[] results, string TestChoice, string[] testStages)
@@ -351,154 +360,156 @@ namespace HP435B_Test
 
         private static string CreateTestReport(string reportTitle, string specification, Image setupImage, string[] stageNames, double[,] stageLimits, StatisticalValues[] results, string filePrefix, string switchPositionHeader, short valuePrecision = 4)
         {
-            PdfDocument document = new PdfDocument();
-            PdfPage page = document.Pages.Add();
-            PdfGraphics graphics = page.Graphics;
-
-            PdfFont titleFont = new PdfStandardFont(PdfFontFamily.Helvetica, 20, PdfFontStyle.Bold);
-            PdfFont textFont = new PdfStandardFont(PdfFontFamily.Helvetica, 10, PdfFontStyle.Bold);
-            PdfFont resultsFont = new PdfStandardFont(PdfFontFamily.Courier, 8, PdfFontStyle.Bold);
-
-            // Define layout format to enable pagination
-            PdfLayoutFormat layoutFormat = new PdfLayoutFormat
+            using (PdfDocument document = new PdfDocument())
             {
-                Layout = PdfLayoutType.Paginate,
-                Break = PdfLayoutBreakType.FitPage
-            };
+                PdfPage page = document.Pages.Add();
+                PdfGraphics graphics = page.Graphics;
 
-            PdfTextElement textElement = new PdfTextElement(reportTitle, titleFont, new PdfSolidBrush(Color.Blue));
-            PdfLayoutResult layoutResult = textElement.Draw(page, new RectangleF(0, 0, page.GetClientSize().Width, page.GetClientSize().Height));
+                PdfFont titleFont = new PdfStandardFont(PdfFontFamily.Helvetica, 20, PdfFontStyle.Bold);
+                PdfFont textFont = new PdfStandardFont(PdfFontFamily.Helvetica, 10, PdfFontStyle.Bold);
+                PdfFont resultsFont = new PdfStandardFont(PdfFontFamily.Courier, 8, PdfFontStyle.Bold);
 
-            textElement = new PdfTextElement(specification, textFont, new PdfSolidBrush(Color.Black));
-            layoutResult = textElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 10, page.GetClientSize().Width, page.GetClientSize().Height));
-
-            PdfImage image = PdfImage.FromImage(setupImage);
-            float scaleFactor = (float)page.GetClientSize().Width / image.Width;
-            int targetHeight = (int)(image.Height * scaleFactor);
-            graphics.DrawImage(image, 0, layoutResult.Bounds.Bottom + 20, page.GetClientSize().Width, targetHeight);
-
-            textElement.Text = "Results";
-            textElement.Font = new PdfStandardFont(PdfFontFamily.Helvetica, 14, PdfFontStyle.Bold);
-            layoutResult = textElement.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + targetHeight + 20));
-
-            PdfLine line = new PdfLine(new PointF(0, 0), new PointF(page.GetClientSize().Width, 0)) { Pen = PdfPens.DarkGray };
-            layoutResult = line.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 5));
-
-            PdfGrid grid = new PdfGrid();
-            List<Program.ResultListRow> data = new List<Program.ResultListRow>();
-
-            int numRows = stageNames.Length / 2;
-            for (int i = 0; i < numRows; i++)
-            {
-                int idx1 = i;
-                int idx2 = i + numRows;
-                data.Add(new Program.ResultListRow(
-                    stageNames[idx1],
-                    ToEngineeringFormat.Convert(stageLimits[idx1, 0], valuePrecision, "Vdc"),
-                    ToEngineeringFormat.Convert(results[idx1].Average, valuePrecision, "Vdc"),
-                    ToEngineeringFormat.Convert(stageLimits[idx1, 1], valuePrecision, "Vdc"),
-                    stageNames[idx2],
-                    ToEngineeringFormat.Convert(stageLimits[idx2, 0], valuePrecision, "Vdc"),
-                    ToEngineeringFormat.Convert(results[idx2].Average, valuePrecision, "Vdc"),
-                    ToEngineeringFormat.Convert(stageLimits[idx2, 1], valuePrecision, "Vdc")
-                ));
-            }
-            grid.DataSource = data;
-
-            grid.Headers[0].Cells[0].Value = switchPositionHeader;
-            grid.Headers[0].Cells[1].Value = "Results";
-            grid.Headers[0].Cells[4].Value = switchPositionHeader;
-            grid.Headers[0].Cells[5].Value = "Results";
-
-            grid.Headers[0].Cells[0].RowSpan = 2;
-            grid.Headers[0].Cells[0].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
-            grid.Headers[0].Cells[1].ColumnSpan = 3;
-            grid.Headers[0].Cells[1].StringFormat = new PdfStringFormat(PdfTextAlignment.Center);
-            grid.Headers[0].Cells[4].RowSpan = 2;
-            grid.Headers[0].Cells[4].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
-            grid.Headers[0].Cells[5].ColumnSpan = 3;
-            grid.Headers[0].Cells[5].StringFormat = new PdfStringFormat(PdfTextAlignment.Center);
-
-            PdfGridRow[] header = grid.Headers.Add(1);
-            header[1].Cells[0].Value = "";
-            header[1].Cells[1].Value = "Min";
-            header[1].Cells[1].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
-            header[1].Cells[2].Value = "Actual";
-            header[1].Cells[2].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
-            header[1].Cells[3].Value = "Max";
-            header[1].Cells[3].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
-            header[1].Cells[4].Value = "";
-            header[1].Cells[5].Value = "Min";
-            header[1].Cells[5].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
-            header[1].Cells[6].Value = "Actual";
-            header[1].Cells[6].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
-            header[1].Cells[7].Value = "Max";
-            header[1].Cells[7].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
-
-            PdfStringFormat resultCellFormat = new PdfStringFormat { Alignment = PdfTextAlignment.Center };
-            foreach (PdfGridRow gridRow in grid.Rows)
-            {
-                gridRow.Cells[1].Style.StringFormat = resultCellFormat;
-                gridRow.Cells[2].Style.StringFormat = resultCellFormat;
-                gridRow.Cells[3].Style.StringFormat = resultCellFormat;
-                gridRow.Cells[5].Style.StringFormat = resultCellFormat;
-                gridRow.Cells[6].Style.StringFormat = resultCellFormat;
-                gridRow.Cells[7].Style.StringFormat = resultCellFormat;
-            }
-
-            for (int i = 0; i < grid.Rows.Count; i++)
-            {
-                // First column
-                if (results[i].Average >= stageLimits[i, 0] && results[i].Average <= stageLimits[i, 1])
+                // Define layout format to enable pagination
+                PdfLayoutFormat layoutFormat = new PdfLayoutFormat
                 {
-                    grid.Rows[i].Cells[2].Style.BackgroundBrush = new PdfSolidBrush(Color.LightGreen);
+                    Layout = PdfLayoutType.Paginate,
+                    Break = PdfLayoutBreakType.FitPage
+                };
+
+                PdfTextElement textElement = new PdfTextElement(reportTitle, titleFont, new PdfSolidBrush(Color.Blue));
+                PdfLayoutResult layoutResult = textElement.Draw(page, new RectangleF(0, 0, page.GetClientSize().Width, page.GetClientSize().Height));
+
+                textElement = new PdfTextElement(specification, textFont, new PdfSolidBrush(Color.Black));
+                layoutResult = textElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 10, page.GetClientSize().Width, page.GetClientSize().Height));
+
+                PdfImage image = PdfImage.FromImage(setupImage);
+                float scaleFactor = (float)page.GetClientSize().Width / image.Width;
+                int targetHeight = (int)(image.Height * scaleFactor);
+                graphics.DrawImage(image, 0, layoutResult.Bounds.Bottom + 20, page.GetClientSize().Width, targetHeight);
+
+                textElement.Text = "Results";
+                textElement.Font = new PdfStandardFont(PdfFontFamily.Helvetica, 14, PdfFontStyle.Bold);
+                layoutResult = textElement.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + targetHeight + 20));
+
+                PdfLine line = new PdfLine(new PointF(0, 0), new PointF(page.GetClientSize().Width, 0)) { Pen = PdfPens.DarkGray };
+                layoutResult = line.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 5));
+
+                PdfGrid grid = new PdfGrid();
+                List<Program.ResultListRow> data = new List<Program.ResultListRow>();
+
+                int numRows = stageNames.Length / 2;
+                for (int i = 0; i < numRows; i++)
+                {
+                    int idx1 = i;
+                    int idx2 = i + numRows;
+                    data.Add(new Program.ResultListRow(
+                        stageNames[idx1],
+                        ToEngineeringFormat.Convert(stageLimits[idx1, 0], valuePrecision, "Vdc"),
+                        ToEngineeringFormat.Convert(results[idx1].Average, valuePrecision, "Vdc"),
+                        ToEngineeringFormat.Convert(stageLimits[idx1, 1], valuePrecision, "Vdc"),
+                        stageNames[idx2],
+                        ToEngineeringFormat.Convert(stageLimits[idx2, 0], valuePrecision, "Vdc"),
+                        ToEngineeringFormat.Convert(results[idx2].Average, valuePrecision, "Vdc"),
+                        ToEngineeringFormat.Convert(stageLimits[idx2, 1], valuePrecision, "Vdc")
+                    ));
                 }
-                else
+                grid.DataSource = data;
+
+                grid.Headers[0].Cells[0].Value = switchPositionHeader;
+                grid.Headers[0].Cells[1].Value = "Results";
+                grid.Headers[0].Cells[4].Value = switchPositionHeader;
+                grid.Headers[0].Cells[5].Value = "Results";
+
+                grid.Headers[0].Cells[0].RowSpan = 2;
+                grid.Headers[0].Cells[0].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+                grid.Headers[0].Cells[1].ColumnSpan = 3;
+                grid.Headers[0].Cells[1].StringFormat = new PdfStringFormat(PdfTextAlignment.Center);
+                grid.Headers[0].Cells[4].RowSpan = 2;
+                grid.Headers[0].Cells[4].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+                grid.Headers[0].Cells[5].ColumnSpan = 3;
+                grid.Headers[0].Cells[5].StringFormat = new PdfStringFormat(PdfTextAlignment.Center);
+
+                PdfGridRow[] header = grid.Headers.Add(1);
+                header[1].Cells[0].Value = "";
+                header[1].Cells[1].Value = "Min";
+                header[1].Cells[1].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+                header[1].Cells[2].Value = "Actual";
+                header[1].Cells[2].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+                header[1].Cells[3].Value = "Max";
+                header[1].Cells[3].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+                header[1].Cells[4].Value = "";
+                header[1].Cells[5].Value = "Min";
+                header[1].Cells[5].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+                header[1].Cells[6].Value = "Actual";
+                header[1].Cells[6].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+                header[1].Cells[7].Value = "Max";
+                header[1].Cells[7].StringFormat = new PdfStringFormat(PdfTextAlignment.Center, PdfVerticalAlignment.Middle);
+
+                PdfStringFormat resultCellFormat = new PdfStringFormat { Alignment = PdfTextAlignment.Center };
+                foreach (PdfGridRow gridRow in grid.Rows)
                 {
-                    grid.Rows[i].Cells[2].Style.BackgroundBrush = new PdfSolidBrush(Color.Red);
-                    grid.Rows[i].Cells[2].Style.TextBrush = new PdfSolidBrush(Color.White);
+                    gridRow.Cells[1].Style.StringFormat = resultCellFormat;
+                    gridRow.Cells[2].Style.StringFormat = resultCellFormat;
+                    gridRow.Cells[3].Style.StringFormat = resultCellFormat;
+                    gridRow.Cells[5].Style.StringFormat = resultCellFormat;
+                    gridRow.Cells[6].Style.StringFormat = resultCellFormat;
+                    gridRow.Cells[7].Style.StringFormat = resultCellFormat;
                 }
 
-                // Second column
-                int offsetValue = i + numRows;
-                if (results[offsetValue].Average >= stageLimits[offsetValue, 0] && results[offsetValue].Average <= stageLimits[offsetValue, 1])
+                for (int i = 0; i < grid.Rows.Count; i++)
                 {
-                    grid.Rows[i].Cells[6].Style.BackgroundBrush = new PdfSolidBrush(Color.LightGreen);
+                    // First column
+                    if (results[i].Average >= stageLimits[i, 0] && results[i].Average <= stageLimits[i, 1])
+                    {
+                        grid.Rows[i].Cells[2].Style.BackgroundBrush = new PdfSolidBrush(Color.LightGreen);
+                    }
+                    else
+                    {
+                        grid.Rows[i].Cells[2].Style.BackgroundBrush = new PdfSolidBrush(Color.Red);
+                        grid.Rows[i].Cells[2].Style.TextBrush = new PdfSolidBrush(Color.White);
+                    }
+
+                    // Second column
+                    int offsetValue = i + numRows;
+                    if (results[offsetValue].Average >= stageLimits[offsetValue, 0] && results[offsetValue].Average <= stageLimits[offsetValue, 1])
+                    {
+                        grid.Rows[i].Cells[6].Style.BackgroundBrush = new PdfSolidBrush(Color.LightGreen);
+                    }
+                    else
+                    {
+                        grid.Rows[i].Cells[6].Style.BackgroundBrush = new PdfSolidBrush(Color.Red);
+                        grid.Rows[i].Cells[6].Style.TextBrush = new PdfSolidBrush(Color.White);
+                    }
                 }
-                else
+                grid.Style.CellPadding.All = 5;
+                layoutResult = grid.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 20));
+
+                textElement.Text = "Detailed Position Results";
+                textElement.Font = new PdfStandardFont(PdfFontFamily.Helvetica, 14, PdfFontStyle.Bold);
+                layoutResult = textElement.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 20));
+
+                line = new PdfLine(new PointF(0, 0), new PointF(page.GetClientSize().Width, 0)) { Pen = PdfPens.DarkGray };
+                layoutResult = line.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 5));
+
+                string detailedResults = string.Empty;
+
+                // Detailed result output
+                for (int i = 0; i < stageNames.Length; i++)
                 {
-                    grid.Rows[i].Cells[6].Style.BackgroundBrush = new PdfSolidBrush(Color.Red);
-                    grid.Rows[i].Cells[6].Style.TextBrush = new PdfSolidBrush(Color.White);
+                    // Load the text into detailedResults.
+                    detailedResults += stageNames[i].PadRight(10) + " - " + results[i].ToEngineeringString() + "\n";
                 }
+
+                PdfTextElement resultElement = new PdfTextElement(detailedResults, resultsFont, new PdfSolidBrush(Color.Black));
+
+                layoutResult = resultElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 5, page.GetClientSize().Width, page.GetClientSize().Height), layoutFormat);
+
+                var fileName = /*Directory.GetCurrentDirectory().ToString() + "\\"+*/ filePrefix + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf";
+                document.Save(fileName);
+                document.Close(true);
+
+                return fileName;
             }
-            grid.Style.CellPadding.All = 5;
-            layoutResult = grid.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 20));
-
-            textElement.Text = "Detailed Position Results";
-            textElement.Font = new PdfStandardFont(PdfFontFamily.Helvetica, 14, PdfFontStyle.Bold);
-            layoutResult = textElement.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 20));
-
-            line = new PdfLine(new PointF(0, 0), new PointF(page.GetClientSize().Width, 0)) { Pen = PdfPens.DarkGray };
-            layoutResult = line.Draw(page, new PointF(0, layoutResult.Bounds.Bottom + 5));
-
-            string detailedResults = string.Empty;
-
-            // Detailed result output
-            for (int i = 0; i < stageNames.Length; i++)
-            {
-                // Load the text into detailedResults.
-                detailedResults += stageNames[i].PadRight(10) + " - " + results[i].ToEngineeringString() + "\n";
-            }
-
-            PdfTextElement resultElement = new PdfTextElement(detailedResults, resultsFont, new PdfSolidBrush(Color.Black));
-
-            layoutResult = resultElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 5, page.GetClientSize().Width, page.GetClientSize().Height), layoutFormat);
-
-            var fileName = /*Directory.GetCurrentDirectory().ToString() + "\\"+*/ filePrefix + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf";
-            document.Save(fileName);
-            document.Close(true);
-
-            return fileName;
         }
 
         private static void PrintMeasurementResults(string title, List<double> doubleList)
