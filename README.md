@@ -83,3 +83,8 @@ This program is a test automation tool for an HP435B instrument, interfaced usin
 5. A PDF summary report is generated - [View Example File](https://github.com/TGoodhew/HP435B-Test/blob/master/AccuracyTestReport1-44-30%20PM.pdf)
 6. User can open the report or run another test.
 
+## License
+
+This project is licensed under the [MIT License](LICENSE.txt).
+
+See the LICENSE.txt file for full license details.
