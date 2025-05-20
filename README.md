@@ -80,6 +80,6 @@ This program is a test automation tool for an HP435B instrument, interfaced usin
 2. Chooses a test (e.g., "Zero Carryover").
 3. Follows prompts to configure the instrument and DUT (Device Under Test) for each stage.
 4. Results are displayed live in the terminal.
-5. A PDF summary report is generated.
+5. A PDF summary report is generated - [View Example File](https://github.com/TGoodhew/HP435B-Test/blob/master/AccuracyTestReport1-44-30%20PM.pdf)
 6. User can open the report or run another test.
 
