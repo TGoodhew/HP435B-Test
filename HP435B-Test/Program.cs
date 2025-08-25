@@ -160,7 +160,7 @@ namespace HP435B_Test
                     testCalibrationStages[i] = num.ToString();
                 }
 
-                // Ask for the user's favorite fruit
+                // Ask for test choice
                 var TestChoice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
                         .Title("Select the test to run?")
@@ -170,7 +170,7 @@ namespace HP435B_Test
 
                 while (TestChoice != "Exit")
                 {
-                    // Echo the fruit back to the terminal
+                    // Echo the back to the terminal
                     AnsiConsole.WriteLine($"DMM Details are: {QueryString("*IDN?")}");
 
                     SetupDMM(testPoints);
