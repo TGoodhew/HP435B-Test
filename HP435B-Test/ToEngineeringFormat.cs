@@ -6,52 +6,56 @@ using System.Threading.Tasks;
 
 namespace HP435B_Test
 {
-    // All credit to Steve Hageman for the implementation
-    // http://analoghome.blogspot.com/2012/01/how-to-format-numbers-in-engineering.html
+    /// <summary>
+    /// Utility class for converting numeric values to engineering notation format.
+    /// Credit: Steve Hageman - http://analoghome.blogspot.com/2012/01/how-to-format-numbers-in-engineering.html
+    /// </summary>
     public static class ToEngineeringFormat
     {
+        /// <summary>
+        /// SI prefix constants for engineering notation (yocto to tera).
+        /// </summary>
+        private static readonly string[] prefixConstants = { " y", " z", " a", " f", " p", " n", " µ", " m", " ", " k", " M", " G", " T" };
 
-        // Used in adding the units to the return string
-        private static string[] prefix_const = { " y", " z", " a", " f", " p", " n", " µ", " m", " ", " k", " M", " G", " T" };
-
-        // number: The number to convert.
-        // 
-        // significant_digits: The number of significant digits to return. digits should be a minimum of 3 for 
-        // Engineering notation this routine will work with any number from 1 to 15
-        // But when significant_digits is less than 3 the output may be in scientific notation
-        //
-        // units: what the number is a measure of, like "Hz", "Farads", "Tesla", etc.
-        public static string Convert(double number, Int16 significant_digits = 3, string units = "")
+        /// <summary>
+        /// Converts a numeric value to engineering notation format with optional units.
+        /// </summary>
+        /// <param name="number">The number to convert.</param>
+        /// <param name="significantDigits">The number of significant digits to return (1-15, recommended minimum of 3).</param>
+        /// <param name="units">The unit of measurement (e.g., "Hz", "Farads", "Tesla").</param>
+        /// <returns>A string representation of the number in engineering notation with SI prefix and units.</returns>
+        public static string Convert(double number, Int16 significantDigits = 3, string units = "")
         {
+            // Handle special cases: zero, NaN, and infinity
+            if (number == 0.0)
+                return "0 " + units;
+            if (double.IsNaN(number) || double.IsInfinity(number))
+                return number.ToString() + " " + units;
+
             double scale = Math.Log10(Math.Abs(number));
             if (scale < 0.0)
                 scale += -3.0;
 
-            // The + 0.001 here makes sure that we use the proper scale range by pushing the calculated range just a bit.
             Int16 power = (Int16)((scale / 3) + 0.001);
 
-            // For this conversion the maxiumum number can't exceed 10^12 so limit the "power" to 10^12
-            // if also can't be lower that 10^-24 so limit it there as well - The code here is actually 
-            // designed for a general case rather than int16 but it was a cut and paste
             if (power.CompareTo(-8) < 0)
                 power = -8;
             if (power.CompareTo(4) > 0)
                 power = 4;
 
-            string prefix_str = prefix_const[power + 8];
-            double scale_factor = Math.Pow(10.0, (double)power * 3.0);
-            double base_num = number / scale_factor;
+            string prefixStr = prefixConstants[power + 8];
+            double scaleFactor = Math.Pow(10.0, (double)power * 3.0);
+            double baseNum = number / scaleFactor;
 
-            // Make the format specifier string - bound limit the digits first
-            if (significant_digits < 1)
-                significant_digits = 1;
-            if (significant_digits > 15)
-                significant_digits = 15;
+            if (significantDigits < 1)
+                significantDigits = 1;
+            if (significantDigits > 15)
+                significantDigits = 15;
 
-            string format_str = "G" + significant_digits.ToString();
-            string converted_str = base_num.ToString(format_str) + prefix_str + units;
+            string formatStr = "G" + significantDigits;
+            string convertedStr = baseNum.ToString(formatStr) + prefixStr + units;
 
-            return (converted_str);
+            return (convertedStr);
         }
     }
 }
