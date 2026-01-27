@@ -923,6 +923,15 @@ namespace HP435B_Test
             // Update the GPIB address string
             gpibAddress = string.Format("GPIB0::{0}::INSTR", gpibIntAddress);
 
+            // If we are currently connected, disconnect so we don't keep using the old instrument.
+            if (gpibSession != null)
+            {
+                AnsiConsole.MarkupLine("[yellow]GPIB address changed while connected. Disconnecting current session.[/]");
+                gpibSession.ServiceRequest -= SRQHandler;
+                gpibSession.Dispose();
+                gpibSession = null;
+            }
+
             AnsiConsole.MarkupLine("[green]GPIB Address updated to: {0}[/]", gpibIntAddress);
             Thread.Sleep(1000); // Pause for a moment to let the user see the message
         }
