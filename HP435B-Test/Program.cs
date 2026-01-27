@@ -354,7 +354,17 @@ namespace HP435B_Test
                             );
 
                     if (openReportChoice == "Yes")
-                        Process.Start("explorer.exe", reportFilename);
+                    {
+                        // Validate that the file exists before attempting to open it
+                        if (File.Exists(reportFilename))
+                        {
+                            Process.Start("explorer.exe", reportFilename);
+                        }
+                        else
+                        {
+                            AnsiConsole.MarkupLine($"[red]Error: Report file '{reportFilename}' not found.[/]");
+                        }
+                    }
 
                     AnsiConsole.Clear();
 
@@ -370,8 +380,17 @@ namespace HP435B_Test
             }
             finally
             {
+                // Unsubscribe from event before disposing to prevent resource leaks
+                if (gpibSession != null)
+                {
+                    gpibSession.ServiceRequest -= SRQHandler;
+                }
+                
                 gpibSession?.Dispose();
                 resManager?.Dispose();
+                
+                // Dispose of the semaphore to release unmanaged resources
+                srqWait?.Dispose();
             }
         }
 
@@ -463,6 +482,13 @@ namespace HP435B_Test
             var result = QueryString(":FETCh?");
 
             List<double> doubleList = ConvertStringToDoubleList(result);
+            
+            // Verify we have valid data before calculating statistics
+            if (doubleList.Count == 0)
+            {
+                throw new InvalidOperationException($"No valid measurement data received from instrument at stage '{stage}'. Check instrument configuration and data format.");
+            }
+            
             return new StatisticalValues(doubleList.Min(), doubleList.Max(), doubleList.Average(), StdDev(doubleList));
         }
 
@@ -622,9 +648,18 @@ namespace HP435B_Test
 
                 layoutResult = resultElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 5, page.GetClientSize().Width, page.GetClientSize().Height), layoutFormat);
 
-                var fileName = filePrefix + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf";
-                document.Save(fileName);
-                document.Close(true);
+                // Include milliseconds in filename to prevent overwrites when tests run in quick succession
+                var fileName = filePrefix + DateTime.Now.ToString("HH-mm-ss-fff") + ".pdf";
+                
+                try
+                {
+                    document.Save(fileName);
+                    document.Close(true);
+                }
+                catch (IOException ex)
+                {
+                    throw new IOException($"Failed to save PDF report '{fileName}'. Check disk space and file permissions.", ex);
+                }
 
                 return fileName;
             }
@@ -730,7 +765,12 @@ namespace HP435B_Test
 
             SendCommand("*CLS");
 
-            srqWait.Release();
+            // Only release the semaphore if it's not already at maximum capacity
+            // to prevent SemaphoreFullException when multiple SRQ events fire rapidly
+            if (srqWait.CurrentCount == 0)
+            {
+                srqWait.Release();
+            }
         }
 
         /// <summary>
