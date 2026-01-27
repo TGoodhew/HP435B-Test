@@ -299,7 +299,7 @@ namespace HP435B_Test
                 
                 var panel = new Panel(
                     "[bold yellow]Available Tests:[/]\n\n" +
-                    "[green]• Zero Carryover[/] - Validates zero carry over across all ranges\n" +
+                    "[green]• Zero Carryover[/] - Validates zero carryover across all ranges\n" +
                     "  Specification: ±0.5% of full scale when zeroed in the most sensitive range.\n\n" +
                     "[green]• Instrument Accuracy with Calibrator[/] - Tests instrumentation accuracy\n" +
                     "  Specification: ±1% of full scale on all ranges.\n\n" +
