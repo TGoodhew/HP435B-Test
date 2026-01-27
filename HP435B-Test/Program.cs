@@ -27,27 +27,27 @@ namespace HP435B_Test
         /// <summary>
         /// GPIB session for communicating with the test instrument.
         /// </summary>
-        public static GpibSession gpibSession;
+        private static GpibSession gpibSession;
 
         /// <summary>
         /// VISA resource manager for managing instrument connections.
         /// </summary>
-        public static NationalInstruments.Visa.ResourceManager resManager;
+        private static NationalInstruments.Visa.ResourceManager resManager;
 
         /// <summary>
         /// GPIB address of the digital multimeter (34401A).
         /// </summary>
-        public static int gpibIntAddress = 14;
+        private static readonly int gpibIntAddress = 14;
 
         /// <summary>
         /// Full GPIB address string for instrument connection.
         /// </summary>
-        public static string gpibAddress = string.Format("GPIB0::{0}::INSTR", gpibIntAddress);
+        private static string gpibAddress = string.Format("GPIB0::{0}::INSTR", gpibIntAddress);
 
         /// <summary>
         /// Semaphore used to wait for service request (SRQ) events from the instrument.
         /// </summary>
-        public static SemaphoreSlim srqWait = new SemaphoreSlim(0, 1);
+        private static readonly SemaphoreSlim srqWait = new SemaphoreSlim(0, 1);
 
         /// <summary>
         /// Array of test stage labels for range switch positions.
@@ -346,14 +346,14 @@ namespace HP435B_Test
 
                     SendCommand("*CLS;*RST");
 
-                    testChoice = AnsiConsole.Prompt(
+                    var openReportChoice = AnsiConsole.Prompt(
                         new SelectionPrompt<string>()
                             .Title("Open the report PDF?")
                             .PageSize(10)
                             .AddChoices(new[] { "Yes", "No", })
                             );
 
-                    if (testChoice == "Yes")
+                    if (openReportChoice == "Yes")
                         Process.Start("explorer.exe", reportFilename);
 
                     AnsiConsole.Clear();
@@ -383,12 +383,9 @@ namespace HP435B_Test
         /// <param name="testStages">Array of stage labels for the test.</param>
         private static void TestRun(StatisticalValues[] results, string testChoice, string[] testStages)
         {
-            string columnName = string.Empty;
-
-            if (testChoice == "Calibration Factor")
-                columnName = "Calibration Switch Position";
-            else
-                columnName = "Range Switch Position";
+            string columnName = testChoice == "Calibration Factor" 
+                ? "Calibration Switch Position" 
+                : "Range Switch Position";
 
             // Define a Spectre table to display the test reults
             var table = new Table()
@@ -458,7 +455,10 @@ namespace HP435B_Test
             SendCommand(":INIT");
             SendCommand("*OPC");
 
-            srqWait.Wait();
+            if (!srqWait.Wait(TimeSpan.FromSeconds(30)))
+            {
+                throw new TimeoutException("Timeout waiting for instrument SRQ. Check instrument connection and configuration.");
+            }
 
             var result = QueryString(":FETCh?");
 
@@ -701,7 +701,7 @@ namespace HP435B_Test
 
             foreach (string value in values)
             {
-                if (double.TryParse(value, out double doubleValue))
+                if (double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double doubleValue))
                 {
                     result.Add(doubleValue);
                 }

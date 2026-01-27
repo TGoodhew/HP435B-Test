@@ -15,7 +15,7 @@ namespace HP435B_Test
         /// <summary>
         /// SI prefix constants for engineering notation (yocto to tera).
         /// </summary>
-        private static string[] prefixConstants = { " y", " z", " a", " f", " p", " n", " µ", " m", " ", " k", " M", " G", " T" };
+        private static readonly string[] prefixConstants = { " y", " z", " a", " f", " p", " n", " µ", " m", " ", " k", " M", " G", " T" };
 
         /// <summary>
         /// Converts a numeric value to engineering notation format with optional units.
@@ -26,6 +26,12 @@ namespace HP435B_Test
         /// <returns>A string representation of the number in engineering notation with SI prefix and units.</returns>
         public static string Convert(double number, Int16 significantDigits = 3, string units = "")
         {
+            // Handle special cases: zero, NaN, and infinity
+            if (number == 0.0)
+                return "0 " + units;
+            if (double.IsNaN(number) || double.IsInfinity(number))
+                return number.ToString() + " " + units;
+
             double scale = Math.Log10(Math.Abs(number));
             if (scale < 0.0)
                 scale += -3.0;
@@ -46,7 +52,7 @@ namespace HP435B_Test
             if (significantDigits > 15)
                 significantDigits = 15;
 
-            string formatStr = "G" + significantDigits.ToString();
+            string formatStr = "G" + significantDigits;
             string convertedStr = baseNum.ToString(formatStr) + prefixStr + units;
 
             return (convertedStr);
