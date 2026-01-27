@@ -385,7 +385,7 @@ namespace HP435B_Test
         {
             string columnName = string.Empty;
 
-            if (TestChoice == "Calibration Factor")
+            if (testChoice == "Calibration Factor")
                 columnName = "Calibration Switch Position";
             else
                 columnName = "Range Switch Position";
