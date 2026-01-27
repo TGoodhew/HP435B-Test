@@ -370,6 +370,12 @@ namespace HP435B_Test
             }
             finally
             {
+                // Unsubscribe from event before disposing to prevent resource leaks
+                if (gpibSession != null)
+                {
+                    gpibSession.ServiceRequest -= SRQHandler;
+                }
+                
                 gpibSession?.Dispose();
                 resManager?.Dispose();
             }
@@ -463,6 +469,13 @@ namespace HP435B_Test
             var result = QueryString(":FETCh?");
 
             List<double> doubleList = ConvertStringToDoubleList(result);
+            
+            // Verify we have valid data before calculating statistics
+            if (doubleList.Count == 0)
+            {
+                throw new InvalidOperationException($"No valid measurement data received from instrument at stage '{stage}'. Check instrument configuration and data format.");
+            }
+            
             return new StatisticalValues(doubleList.Min(), doubleList.Max(), doubleList.Average(), StdDev(doubleList));
         }
 
@@ -622,9 +635,18 @@ namespace HP435B_Test
 
                 layoutResult = resultElement.Draw(page, new RectangleF(0, layoutResult.Bounds.Bottom + 5, page.GetClientSize().Width, page.GetClientSize().Height), layoutFormat);
 
-                var fileName = filePrefix + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".pdf";
-                document.Save(fileName);
-                document.Close(true);
+                // Include milliseconds in filename to prevent overwrites when tests run in quick succession
+                var fileName = filePrefix + DateTime.Now.ToString("HH-mm-ss-fff") + ".pdf";
+                
+                try
+                {
+                    document.Save(fileName);
+                    document.Close(true);
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is PathTooLongException || ex is NotSupportedException)
+                {
+                    throw new IOException($"Failed to save PDF report '{fileName}'. Check disk space, file permissions, and path validity.", ex);
+                }
 
                 return fileName;
             }
@@ -730,7 +752,17 @@ namespace HP435B_Test
 
             SendCommand("*CLS");
 
-            srqWait.Release();
+            // Handle the case where multiple SRQ events fire rapidly
+            // to prevent SemaphoreFullException
+            try
+            {
+                srqWait.Release();
+            }
+            catch (SemaphoreFullException)
+            {
+                // Semaphore already released, ignore this event
+                Debug.WriteLine("SRQHandler - Semaphore already at maximum count, ignoring duplicate SRQ");
+            }
         }
 
         /// <summary>
