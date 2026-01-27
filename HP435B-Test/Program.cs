@@ -915,7 +915,7 @@ namespace HP435B_Test
         private static void SetGPIBAddress()
         {
             gpibIntAddress = AnsiConsole.Prompt(
-                new TextPrompt<int>("Enter HP 34401A DMM GPIB address (Default is 14)?")
+                new TextPrompt<int>("Enter HP 34401A DMM GPIB address (Default is 14):")
                 .DefaultValue(14)
                 .Validate(n => n >= 0 && n <= 30 ? ValidationResult.Success() : ValidationResult.Error("Address must be between 0 and 30"))
                 );
@@ -937,7 +937,7 @@ namespace HP435B_Test
             {
                 AnsiConsole.MarkupLine("[yellow]Warning: Already connected to a device. Disconnecting and reconnecting.[/]");
                 gpibSession.ServiceRequest -= SRQHandler;
-                gpibSession?.Dispose();
+                gpibSession.Dispose();
                 gpibSession = null;
                 Thread.Sleep(1000); // Pause for a moment to let the user see the message
             }
@@ -960,7 +960,7 @@ namespace HP435B_Test
                 {
                     AnsiConsole.MarkupLine("[red]Error: Device failed to respond. Check GPIB address and device state.[/]");
                     gpibSession.ServiceRequest -= SRQHandler;
-                    gpibSession?.Dispose();
+                    gpibSession.Dispose();
                     gpibSession = null;
                     Thread.Sleep(2000);
                     return false;
@@ -979,7 +979,7 @@ namespace HP435B_Test
                 if (gpibSession != null)
                 {
                     gpibSession.ServiceRequest -= SRQHandler;
-                    gpibSession?.Dispose();
+                    gpibSession.Dispose();
                     gpibSession = null;
                 }
                 
