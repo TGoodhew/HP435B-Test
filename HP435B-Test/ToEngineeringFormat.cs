@@ -15,7 +15,7 @@ namespace HP435B_Test
         /// <summary>
         /// SI prefix constants for engineering notation (yocto to tera).
         /// </summary>
-        private static string[] PrefixConstants = { " y", " z", " a", " f", " p", " n", " µ", " m", " ", " k", " M", " G", " T" };
+        private static string[] prefixConstants = { " y", " z", " a", " f", " p", " n", " µ", " m", " ", " k", " M", " G", " T" };
 
         /// <summary>
         /// Converts a numeric value to engineering notation format with optional units.
@@ -37,7 +37,7 @@ namespace HP435B_Test
             if (power.CompareTo(4) > 0)
                 power = 4;
 
-            string prefixStr = PrefixConstants[power + 8];
+            string prefixStr = prefixConstants[power + 8];
             double scaleFactor = Math.Pow(10.0, (double)power * 3.0);
             double baseNum = number / scaleFactor;
 

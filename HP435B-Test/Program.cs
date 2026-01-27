@@ -59,6 +59,10 @@ namespace HP435B_Test
         /// </summary>
         public static readonly string[] testCalibrationStages = new string[16];
 
+        /// <summary>
+        /// Expected value ranges for zero carryover test at each range switch position.
+        /// First dimension is stage index, second dimension is [min, max] in volts.
+        /// </summary>
         public static readonly double[,] zeroTestStageValues =
         {
             {-15E-3, 15E-3},
@@ -275,7 +279,6 @@ namespace HP435B_Test
 
                 gpibSession.ServiceRequest += SRQHandler;
 
-                // Fill calibration factor array with values from 100 to 85
                 for (int i = 0, num = 100; num >= 85; i++, num--)
                 {
                     testCalibrationStages[i] = num.ToString();
@@ -328,7 +331,7 @@ namespace HP435B_Test
                             TestRun(results, testChoice, testCalibrationStages);
                             reportFilename = CreateTestReport(
                                 "Calibration Factor Test",
-                                "SPECIFICATION: 16-position switch normailizes meter reading to account for calibration factor or effective efficiency. Range 85% to 100% in 1% steps.",
+                                "SPECIFICATION: 16-position switch normalizes meter reading to account for calibration factor or effective efficiency. Range 85% to 100% in 1% steps.",
                                 Properties.Resources.CalibrationTestSetup,
                                 testCalibrationStages,
                                 calibrationFactorTestStageValues,
@@ -399,7 +402,6 @@ namespace HP435B_Test
 
             AnsiConsole.Live(table).Start(ctx =>
             {
-                // Iterate through the test stages
                 for (int i = 0; i < testStages.Length; i++)
                 {
                     Console.Beep(1000, 500);
@@ -629,7 +631,8 @@ namespace HP435B_Test
         }
 
         /// <summary>
-        /// Displays measurement results to the console (currently unused).
+        /// Displays measurement results to the console.
+        /// This is a utility method for debugging and manual result verification.
         /// </summary>
         /// <param name="title">Title for the results display.</param>
         /// <param name="doubleList">List of measured values.</param>
