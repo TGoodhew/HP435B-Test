@@ -284,6 +284,37 @@ namespace HP435B_Test
                     testCalibrationStages[i] = num.ToString();
                 }
 
+                // Display application title and description
+                AnsiConsole.Write(
+                    new FigletText("HP435B Test")
+                        .Centered()
+                        .Color(Spectre.Console.Color.Green));
+
+                AnsiConsole.WriteLine();
+                AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
+                AnsiConsole.WriteLine();
+                AnsiConsole.MarkupLine("This program performs automated performance tests on the HP435B power meter");
+                AnsiConsole.MarkupLine("using an HP 34401A DMM and HP 11683A Range Calibrator.");
+                AnsiConsole.WriteLine();
+                
+                var panel = new Panel(
+                    "[bold yellow]Available Tests:[/]\n\n" +
+                    "[green]  Zero Carryover[/] - Validates zero carryover across all ranges\n" +
+                    "  Specification: ±0.5% of full scale when zeroed in the most sensitive range.\n\n" +
+                    "[green]  Instrument Accuracy with Calibrator[/] - Tests instrumentation accuracy\n" +
+                    "  Specification: ±1% of full scale on all ranges.\n\n" +
+                    "[green]  Calibration Factor[/] - Tests calibration factor across 16 positions\n" +
+                    "  Specification: 16-position switch normalizes meter reading to account for\n" +
+                    "  calibration factor or effective efficiency (85% to 100% in 1% steps).")
+                {
+                    Header = new PanelHeader(" [bold white]Test Options[/] ", Justify.Center),
+                    Border = BoxBorder.Rounded,
+                    BorderStyle = new Style(Spectre.Console.Color.Cyan1)
+                };
+                
+                AnsiConsole.Write(panel);
+                AnsiConsole.WriteLine();
+
                 var testChoice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
                         .Title("Select the test to run?")
