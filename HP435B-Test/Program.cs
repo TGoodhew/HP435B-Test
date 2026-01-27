@@ -37,7 +37,7 @@ namespace HP435B_Test
         /// <summary>
         /// GPIB address of the digital multimeter (34401A).
         /// </summary>
-        private static readonly int gpibIntAddress = 14;
+        private static int gpibIntAddress = 14;
 
         /// <summary>
         /// Full GPIB address string for instrument connection.
@@ -271,14 +271,6 @@ namespace HP435B_Test
                 // Setup the GPIB connection via the ResourceManager
                 resManager = new NationalInstruments.Visa.ResourceManager();
 
-                // Create a GPIB session for the specified address
-                gpibSession = (GpibSession)resManager.Open(gpibAddress);
-                gpibSession.TimeoutMilliseconds = 8000;
-                gpibSession.TerminationCharacterEnabled = true;
-                gpibSession.Clear();
-
-                gpibSession.ServiceRequest += SRQHandler;
-
                 for (int i = 0, num = 100; num >= 85; i++, num--)
                 {
                     testCalibrationStages[i] = num.ToString();
@@ -317,87 +309,179 @@ namespace HP435B_Test
 
                 var testChoice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
-                        .Title("Select the test to run?")
+                        .Title("Select an option:")
                         .PageSize(10)
-                        .AddChoices(new[] { "Zero Carryover", "Instrument Accuracy with Calibrator", "Calibration Factor", "Exit" })
+                        .AddChoices(new[] { "Settings", "Zero Carryover", "Instrument Accuracy with Calibrator", "Calibration Factor", "Exit" })
                         );
 
                 while (testChoice != "Exit")
                 {
-                    AnsiConsole.WriteLine($"DMM Details are: {QueryString("*IDN?")}");
-
-                    SetupDMM(testPoints);
-
-                    string reportFilename = string.Empty;
-
-                    switch (testChoice)
+                    if (testChoice == "Settings")
                     {
-                        case "Zero Carryover":
-                            TestRun(results, testChoice, testRangeStages);
-                            reportFilename = CreateTestReport(
-                                "Zero Carryover Test",
-                                "SPECIFICATION: ±0.5% of full scale when zeroed in the most sensitive range.",
-                                Properties.Resources.TestSetup,
-                                testRangeStages,
-                                zeroTestStageValues,
-                                results,
-                                "ZeroCarryoverTestReport",
-                                "Range Switch Position",
-                                4);
-                            break;
-                        case "Instrument Accuracy with Calibrator":
-                            TestRun(results, testChoice, testRangeStages);
-                            reportFilename = CreateTestReport(
-                                "Instrument Accuracy Test",
-                                "SPECIFICATION: ±1% of full scale on all ranges.",
-                                Properties.Resources.AccuracyTestSetup,
-                                testRangeStages,
-                                accuracyTestStageValues,
-                                results,
-                                "AccuracyTestReport",
-                                "Range Switch Position",
-                                4);
-                            break;
-                        case "Calibration Factor":
-                            TestRun(results, testChoice, testCalibrationStages);
-                            reportFilename = CreateTestReport(
-                                "Calibration Factor Test",
-                                "SPECIFICATION: 16-position switch normalizes meter reading to account for calibration factor or effective efficiency. Range 85% to 100% in 1% steps.",
-                                Properties.Resources.CalibrationTestSetup,
-                                testCalibrationStages,
-                                calibrationFactorTestStageValues,
-                                results,
-                                "CalibrationFactorTestReport",
-                                "Calibration Switch Position",
-                                4);
-                            break;
-                        default:
-                            break;
+                        AnsiConsole.Clear();
+                        
+                        // Display settings header
+                        AnsiConsole.Write(
+                            new FigletText("Settings")
+                                .Centered()
+                                .Color(Spectre.Console.Color.Yellow));
+                        
+                        AnsiConsole.WriteLine();
+                        
+                        var settingsChoice = AnsiConsole.Prompt(
+                            new SelectionPrompt<string>()
+                                .Title("Select a setting to configure:")
+                                .PageSize(10)
+                                .AddChoices(new[] { "Set GPIB Address", "Connect to DMM", "Back to Main Menu" })
+                                );
+                        
+                        switch (settingsChoice)
+                        {
+                            case "Set GPIB Address":
+                                SetGPIBAddress();
+                                break;
+                            case "Connect to DMM":
+                                if (!ConnectToDevice())
+                                {
+                                    AnsiConsole.MarkupLine("[yellow]Press any key to continue...[/]");
+                                    Console.ReadKey(true);
+                                }
+                                break;
+                            case "Back to Main Menu":
+                                break;
+                        }
+                        
+                        AnsiConsole.Clear();
+                        
+                        // Redisplay application title
+                        AnsiConsole.Write(
+                            new FigletText("HP435B Test")
+                                .Centered()
+                                .Color(Spectre.Console.Color.Green));
+                        
+                        AnsiConsole.WriteLine();
+                        AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
+                        AnsiConsole.WriteLine();
+                        
+                        AnsiConsole.Write(panel);
+                        AnsiConsole.WriteLine();
                     }
+                    else
+                    {
+                        // Ensure device is connected before running tests
+                        if (gpibSession == null)
+                        {
+                            AnsiConsole.MarkupLine("[yellow]Attempting to connect to DMM at address {0}...[/]", gpibIntAddress);
+                            if (!ConnectToDevice())
+                            {
+                                AnsiConsole.MarkupLine("[red]Cannot run tests without a connection to the DMM.[/]");
+                                AnsiConsole.MarkupLine("[yellow]Please configure GPIB address in Settings and connect to the device.[/]");
+                                AnsiConsole.MarkupLine("[yellow]Press any key to continue...[/]");
+                                Console.ReadKey(true);
+                                
+                                AnsiConsole.Clear();
+                                
+                                // Redisplay application title
+                                AnsiConsole.Write(
+                                    new FigletText("HP435B Test")
+                                        .Centered()
+                                        .Color(Spectre.Console.Color.Green));
+                                
+                                AnsiConsole.WriteLine();
+                                AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
+                                AnsiConsole.WriteLine();
+                                
+                                AnsiConsole.Write(panel);
+                                AnsiConsole.WriteLine();
+                                
+                                testChoice = AnsiConsole.Prompt(
+                                    new SelectionPrompt<string>()
+                                        .Title("Select an option:")
+                                        .PageSize(10)
+                                        .AddChoices(new[] { "Settings", "Zero Carryover", "Instrument Accuracy with Calibrator", "Calibration Factor", "Exit" })
+                                        );
+                                continue;
+                            }
+                        }
 
-                    SendCommand("*CLS;*RST");
+                        AnsiConsole.WriteLine($"DMM Details are: {QueryString("*IDN?")}");
 
-                    var openReportChoice = AnsiConsole.Prompt(
-                        new SelectionPrompt<string>()
-                            .Title("Open the report PDF?")
-                            .PageSize(10)
-                            .AddChoices(new[] { "Yes", "No", })
-                            );
+                        SetupDMM(testPoints);
 
-                    if (openReportChoice == "Yes")
-                        Process.Start("explorer.exe", reportFilename);
+                        string reportFilename = string.Empty;
 
-                    AnsiConsole.Clear();
+                        switch (testChoice)
+                        {
+                            case "Zero Carryover":
+                                TestRun(results, testChoice, testRangeStages);
+                                reportFilename = CreateTestReport(
+                                    "Zero Carryover Test",
+                                    "SPECIFICATION: ±0.5% of full scale when zeroed in the most sensitive range.",
+                                    Properties.Resources.TestSetup,
+                                    testRangeStages,
+                                    zeroTestStageValues,
+                                    results,
+                                    "ZeroCarryoverTestReport",
+                                    "Range Switch Position",
+                                    4);
+                                break;
+                            case "Instrument Accuracy with Calibrator":
+                                TestRun(results, testChoice, testRangeStages);
+                                reportFilename = CreateTestReport(
+                                    "Instrument Accuracy Test",
+                                    "SPECIFICATION: ±1% of full scale on all ranges.",
+                                    Properties.Resources.AccuracyTestSetup,
+                                    testRangeStages,
+                                    accuracyTestStageValues,
+                                    results,
+                                    "AccuracyTestReport",
+                                    "Range Switch Position",
+                                    4);
+                                break;
+                            case "Calibration Factor":
+                                TestRun(results, testChoice, testCalibrationStages);
+                                reportFilename = CreateTestReport(
+                                    "Calibration Factor Test",
+                                    "SPECIFICATION: 16-position switch normalizes meter reading to account for calibration factor or effective efficiency. Range 85% to 100% in 1% steps.",
+                                    Properties.Resources.CalibrationTestSetup,
+                                    testCalibrationStages,
+                                    calibrationFactorTestStageValues,
+                                    results,
+                                    "CalibrationFactorTestReport",
+                                    "Calibration Switch Position",
+                                    4);
+                                break;
+                            default:
+                                break;
+                        }
+
+                        SendCommand("*CLS;*RST");
+
+                        var openReportChoice = AnsiConsole.Prompt(
+                            new SelectionPrompt<string>()
+                                .Title("Open the report PDF?")
+                                .PageSize(10)
+                                .AddChoices(new[] { "Yes", "No", })
+                                );
+
+                        if (openReportChoice == "Yes")
+                            Process.Start("explorer.exe", reportFilename);
+
+                        AnsiConsole.Clear();
+                    }
 
                     testChoice = AnsiConsole.Prompt(
                         new SelectionPrompt<string>()
-                            .Title("Select the test to run?")
+                            .Title("Select an option:")
                             .PageSize(10)
-                            .AddChoices(new[] { "Zero Carryover", "Instrument Accuracy with Calibrator", "Calibration Factor", "Exit" })
+                            .AddChoices(new[] { "Settings", "Zero Carryover", "Instrument Accuracy with Calibrator", "Calibration Factor", "Exit" })
                             );
                 }
 
-                gpibSession.SendRemoteLocalCommand(GpibInstrumentRemoteLocalMode.GoToLocalDeassertRen);
+                if (gpibSession != null)
+                {
+                    gpibSession.SendRemoteLocalCommand(GpibInstrumentRemoteLocalMode.GoToLocalDeassertRen);
+                }
             }
             finally
             {
@@ -823,6 +907,94 @@ namespace HP435B_Test
         {
             SendCommand(command);
             return (ReadResponse());
+        }
+
+        /// <summary>
+        /// Prompts the user to set the GPIB address for the DMM.
+        /// </summary>
+        private static void SetGPIBAddress()
+        {
+            gpibIntAddress = AnsiConsole.Prompt(
+                new TextPrompt<int>("Enter HP 34401A DMM GPIB address (Default is 14):")
+                .DefaultValue(14)
+                .Validate(n => n >= 0 && n <= 30 ? ValidationResult.Success() : ValidationResult.Error("Address must be between 0 and 30"))
+                );
+
+            // Update the GPIB address string
+            gpibAddress = string.Format("GPIB0::{0}::INSTR", gpibIntAddress);
+
+            // If we are currently connected, disconnect so we don't keep using the old instrument.
+            if (gpibSession != null)
+            {
+                AnsiConsole.MarkupLine("[yellow]GPIB address changed while connected. Disconnecting current session.[/]");
+                gpibSession.ServiceRequest -= SRQHandler;
+                gpibSession.Dispose();
+                gpibSession = null;
+            }
+
+            AnsiConsole.MarkupLine("[green]GPIB Address updated to: {0}[/]", gpibIntAddress);
+            Thread.Sleep(1000); // Pause for a moment to let the user see the message
+        }
+
+        /// <summary>
+        /// Connects to the GPIB device and initializes the session.
+        /// </summary>
+        /// <returns>True if connection is successful, false otherwise.</returns>
+        private static bool ConnectToDevice()
+        {
+            if (gpibSession != null)
+            {
+                AnsiConsole.MarkupLine("[yellow]Warning: Already connected to a device. Disconnecting and reconnecting.[/]");
+                gpibSession.ServiceRequest -= SRQHandler;
+                gpibSession.Dispose();
+                gpibSession = null;
+                Thread.Sleep(1000); // Pause for a moment to let the user see the message
+            }
+
+            try
+            {
+                // Create a GPIB session for the specified address
+                gpibSession = (GpibSession)resManager.Open(gpibAddress);
+                gpibSession.TimeoutMilliseconds = 8000;
+                gpibSession.TerminationCharacterEnabled = true;
+                gpibSession.Clear();
+
+                gpibSession.ServiceRequest += SRQHandler;
+
+                // Test the connection by sending a simple query
+                SendCommand("*IDN?");
+                string response = ReadResponse();
+                
+                if (string.IsNullOrWhiteSpace(response))
+                {
+                    AnsiConsole.MarkupLine("[red]Error: Device failed to respond. Check GPIB address and device state.[/]");
+                    gpibSession.ServiceRequest -= SRQHandler;
+                    gpibSession.Dispose();
+                    gpibSession = null;
+                    Thread.Sleep(2000);
+                    return false;
+                }
+
+                AnsiConsole.MarkupLine("[green]Successfully connected to device at address {0}[/]", gpibIntAddress);
+                AnsiConsole.MarkupLine("[cyan]Device: {0}[/]", response.Trim());
+                Thread.Sleep(2000);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AnsiConsole.MarkupLine("[red]Error: Failed to connect to GPIB device.[/]");
+                AnsiConsole.MarkupLine("[red]Details: {0}[/]", ex.Message);
+                
+                if (gpibSession != null)
+                {
+                    gpibSession.ServiceRequest -= SRQHandler;
+                    gpibSession.Dispose();
+                    gpibSession = null;
+                }
+                
+                Thread.Sleep(2000);
+                return false;
+            }
         }
     }
 }
