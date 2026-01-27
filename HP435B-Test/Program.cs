@@ -354,17 +354,7 @@ namespace HP435B_Test
                             );
 
                     if (openReportChoice == "Yes")
-                    {
-                        // Validate that the file exists before attempting to open it
-                        if (File.Exists(reportFilename))
-                        {
-                            Process.Start("explorer.exe", reportFilename);
-                        }
-                        else
-                        {
-                            AnsiConsole.MarkupLine($"[red]Error: Report file '{reportFilename}' not found.[/]");
-                        }
-                    }
+                        Process.Start("explorer.exe", reportFilename);
 
                     AnsiConsole.Clear();
 
@@ -388,9 +378,6 @@ namespace HP435B_Test
                 
                 gpibSession?.Dispose();
                 resManager?.Dispose();
-                
-                // Dispose of the semaphore to release unmanaged resources
-                srqWait?.Dispose();
             }
         }
 
@@ -656,9 +643,9 @@ namespace HP435B_Test
                     document.Save(fileName);
                     document.Close(true);
                 }
-                catch (IOException ex)
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is PathTooLongException || ex is NotSupportedException)
                 {
-                    throw new IOException($"Failed to save PDF report '{fileName}'. Check disk space and file permissions.", ex);
+                    throw new IOException($"Failed to save PDF report '{fileName}'. Check disk space, file permissions, and path validity.", ex);
                 }
 
                 return fileName;
@@ -765,11 +752,16 @@ namespace HP435B_Test
 
             SendCommand("*CLS");
 
-            // Only release the semaphore if it's not already at maximum capacity
-            // to prevent SemaphoreFullException when multiple SRQ events fire rapidly
-            if (srqWait.CurrentCount == 0)
+            // Handle the case where multiple SRQ events fire rapidly
+            // to prevent SemaphoreFullException
+            try
             {
                 srqWait.Release();
+            }
+            catch (SemaphoreFullException)
+            {
+                // Semaphore already released, ignore this event
+                Debug.WriteLine("SRQHandler - Semaphore already at maximum count, ignoring duplicate SRQ");
             }
         }
 
