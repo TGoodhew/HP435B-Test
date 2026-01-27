@@ -299,11 +299,11 @@ namespace HP435B_Test
                 
                 var panel = new Panel(
                     "[bold yellow]Available Tests:[/]\n\n" +
-                    "[green]• Zero Carryover[/] - Validates zero carryover across all ranges\n" +
+                    "[green]  Zero Carryover[/] - Validates zero carryover across all ranges\n" +
                     "  Specification: ±0.5% of full scale when zeroed in the most sensitive range.\n\n" +
-                    "[green]• Instrument Accuracy with Calibrator[/] - Tests instrumentation accuracy\n" +
+                    "[green]  Instrument Accuracy with Calibrator[/] - Tests instrumentation accuracy\n" +
                     "  Specification: ±1% of full scale on all ranges.\n\n" +
-                    "[green]• Calibration Factor[/] - Tests calibration factor across 16 positions\n" +
+                    "[green]  Calibration Factor[/] - Tests calibration factor across 16 positions\n" +
                     "  Specification: 16-position switch normalizes meter reading to account for\n" +
                     "  calibration factor or effective efficiency (85% to 100% in 1% steps).")
                 {
