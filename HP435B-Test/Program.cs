@@ -290,12 +290,12 @@ namespace HP435B_Test
                         .Centered()
                         .Color(Spectre.Console.Color.Green));
 
-                AnsiConsole.MarkupLine("");
+                AnsiConsole.WriteLine();
                 AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
-                AnsiConsole.MarkupLine("");
+                AnsiConsole.WriteLine();
                 AnsiConsole.MarkupLine("This program performs automated performance tests on the HP435B power meter");
-                AnsiConsole.MarkupLine("using a HP 34401A DMM and HP 11683A Range Calibrator.");
-                AnsiConsole.MarkupLine("");
+                AnsiConsole.MarkupLine("using an HP 34401A DMM and HP 11683A Range Calibrator.");
+                AnsiConsole.WriteLine();
                 
                 var panel = new Panel(
                     "[bold yellow]Available Tests:[/]\n\n" +
@@ -304,7 +304,8 @@ namespace HP435B_Test
                     "[green]• Instrument Accuracy with Calibrator[/] - Tests instrumentation accuracy\n" +
                     "  Specification: ±1% of full scale on all ranges.\n\n" +
                     "[green]• Calibration Factor[/] - Tests calibration factor across 16 positions\n" +
-                    "  Specification: 16-position switch normalizes meter reading (85% to 100% in 1% steps).")
+                    "  Specification: 16-position switch normalizes meter reading to account for\n" +
+                    "  calibration factor or effective efficiency (85% to 100% in 1% steps).")
                 {
                     Header = new PanelHeader(" [bold white]Test Options[/] ", Justify.Center),
                     Border = BoxBorder.Rounded,
@@ -312,7 +313,7 @@ namespace HP435B_Test
                 };
                 
                 AnsiConsole.Write(panel);
-                AnsiConsole.MarkupLine("");
+                AnsiConsole.WriteLine();
 
                 var testChoice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
