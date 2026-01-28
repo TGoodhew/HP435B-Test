@@ -1,0 +1,228 @@
+# HP435B-Test
+
+A comprehensive automated test application for the HP 435B Power Meter that executes performance verification tests from the HP 435B Owner & Service Manual. This program uses an HP 34401A Digital Multimeter and HP 11683A Range Calibrator to perform automated testing and generate professional PDF reports.
+
+## About the HP 435B Power Meter
+
+The **HP 435B** is a precision analog power meter designed for accurate RF and microwave power measurements. This versatile instrument is commonly used in laboratory and field service applications for testing RF equipment, communication systems, and microwave devices.
+
+### Key Features:
+- **Measurement Range**: Wide dynamic range for power measurements
+- **Frequency Coverage**: Operates across a broad frequency spectrum with appropriate sensors
+- **Calibration Factor**: 16-position calibration switch (85% to 100% in 1% steps) to account for sensor efficiency
+- **Range Settings**: Multiple power ranges for versatile measurement capability
+- **Zero Function**: Ability to zero in the most sensitive range for accurate low-level measurements
+
+The 435B's analog design provides reliable measurements and is valued for its durability and accuracy in professional test environments.
+
+## Performance Tests
+
+This application implements three critical performance tests from the HP 435B Owner & Service Manual to verify the instrument meets its published specifications:
+
+### Test 4-6: Zero Carryover Test
+**Purpose**: Validates that zero carryover remains within specification across all range settings.
+
+**Specification**: ±0.5% of full scale when zeroed in the most sensitive range.
+
+**Procedure**: After zeroing the meter in the most sensitive range (fully counter-clockwise), the meter is tested across all range positions to ensure zero stability is maintained throughout the operating range.
+
+### Test 4-7: Instrumentation Accuracy Test with Calibrator
+**Purpose**: Verifies the overall measurement accuracy of the instrument using a calibrated reference source.
+
+**Specification**: ±1% of full scale on all ranges.
+
+**Procedure**: Using the HP 11683A Range Calibrator as a precision reference, the meter readings are validated at each range setting to ensure they fall within the ±1% accuracy specification.
+
+### Test 4-8: Calibration Factor Test
+**Purpose**: Confirms that the 16-position calibration factor switch correctly normalizes readings.
+
+**Specification**: 16-position switch normalizes meter reading to account for calibration factor or effective efficiency (85% to 100% in 1% steps).
+
+**Procedure**: Tests each of the 16 calibration switch positions to verify proper scaling of measurements. This ensures accurate power measurements when using sensors with different efficiency characteristics.
+
+## Syncfusion PDF Components
+
+This application uses the [Syncfusion PDF library](https://www.syncfusion.com/pdf-framework/net) to generate professional test reports with tables, images, and formatted results.
+
+### Getting a Community License
+
+Syncfusion offers a **free community license** for individual developers and small businesses:
+
+**Eligibility**:
+- Individual developers
+- Companies with less than $1 million USD in annual gross revenue
+- Companies with 5 or fewer developers
+
+**How to Obtain a Community License**:
+
+1. Visit the [Syncfusion Community License page](https://www.syncfusion.com/products/communitylicense)
+2. Click on **"Claim Free License"**
+3. Sign up or log in to your Syncfusion account
+4. Fill out the community license form confirming your eligibility
+5. You will receive your license key via email within 24-48 hours
+
+**Registering Your License**:
+
+Once you receive your license key, register it in your application by adding the following code before any Syncfusion component is used:
+
+```csharp
+// Register Syncfusion license
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("YOUR_LICENSE_KEY");
+```
+
+For this application, you would typically add this in the `Main` method of `Program.cs` before initializing any PDF components.
+
+**Note**: Without a registered license, the application will work but generated PDFs will include a watermark and warning message.
+
+## Prerequisites
+
+### Hardware Requirements
+
+This test application requires the following equipment:
+
+- **HP 435B Power Meter** - The device under test (DUT)
+- **HP 34401A Digital Multimeter** - Used to measure the 435B's output voltage
+- **HP 11683A Range Calibrator** - Provides calibrated reference signals for accuracy testing
+- **GPIB Interface** - National Instruments or compatible GPIB controller card/adapter
+- **BNC Cables and Adapters** - For connecting equipment
+
+### Software Requirements
+
+- **Operating System**: Windows 7 or later (required for GPIB drivers)
+- **.NET Framework**: Version 4.7.2 or later
+- **NI-VISA**: National Instruments VISA drivers for GPIB communication
+  - Download from [National Instruments VISA Download](https://www.ni.com/en-us/support/downloads/drivers/download.ni-visa.html)
+- **Visual Studio 2019 or later** (for building from source)
+
+### NuGet Package Dependencies
+
+The following packages are automatically restored when building:
+
+- `Syncfusion.Pdf.Base` (v30.1462.37.0) - PDF generation
+- `Syncfusion.Licensing` (v30.1462.37.0) - License management
+- `NationalInstruments.Visa` (v25.5.0.13) - GPIB communication
+- `Spectre.Console` (v0.50.0) - Rich terminal UI
+- `Ivi.Visa` (v8.0.0.0) - VISA interface library
+
+## Installation and Setup
+
+### Building from Source
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/TGoodhew/HP435B-Test.git
+   cd HP435B-Test
+   ```
+
+2. **Install NI-VISA drivers** (if not already installed):
+   - Download and install NI-VISA from National Instruments
+   - Restart your computer after installation
+
+3. **Open the solution**:
+   - Open `HP435B-Test.sln` in Visual Studio
+
+4. **Restore NuGet packages**:
+   - Visual Studio should automatically restore packages
+   - Or manually: Right-click solution → Restore NuGet Packages
+
+5. **Configure GPIB Address** (if different from default):
+   - In `Program.cs`, locate the line:
+     ```csharp
+     private static int gpibIntAddress = 14;
+     ```
+   - Change `14` to match your HP 34401A's GPIB address
+
+6. **Build the solution**:
+   - Build → Build Solution (or press Ctrl+Shift+B)
+
+7. **Run the application**:
+   - Press F5 or click Start
+
+### Hardware Setup
+
+1. **Connect GPIB interface** to your computer
+2. **Connect HP 34401A** to the GPIB bus and set its address (default: 14)
+3. **Power on** all equipment and allow warm-up time
+4. **Configure HP 435B** according to the test requirements
+5. **Connect test equipment** as shown in the application's setup diagrams
+
+## Usage
+
+This program is a test automation tool for an HP435B instrument, interfaced using GPIB (General Purpose Interface Bus), likely for electrical measurements. The program allows the user to select and run different tests, gathers measurement data from the instrument, processes the results, and generates a PDF report summarizing the results.
+
+---
+
+## Key Components
+
+- **GPIB Communication Setup**
+  - Uses `NationalInstruments.Visa` and `Ivi.Visa` libraries to communicate with the instrument.
+  - `GpibSession gpibSession` and `ResourceManager resManager` manage the hardware interface.
+
+- **Test Stages & Limits**
+  - Arrays like `testRangeStages`, `zeroTestStageValues`, `accuracyTestStageValues`, and `calibrationFactorTestStageValues` define the steps and pass/fail limits for different tests.
+  - `testCalibrationStages` is populated at runtime with calibration steps.
+
+- **Results Handling**
+  - `StatisticalValues` struct: Stores statistics (min, max, average, standard deviation) for each test stage.
+  - `ResultListRow` class: Used for formatting results into report tables.
+
+- **Main Program Logic (`Main` method)**
+  1. **Initialize GPIB Connection**: Opens and configures the instrument connection.
+  2. **Prepare Calibration Array**: Fills calibration positions for the calibration test.
+  3. **User Interaction Loop**: 
+     - Prompts the user to select a test.
+     - For each test:
+       - Displays instrument ID.
+       - Configures the instrument.
+       - Runs the selected test via `TestRun()`, which interacts with the user and collects measurement data.
+       - Creates a PDF report of the results via `CreateTestReport()`.
+       - Prompts the user to open the report and/or run another test.
+  4. **Cleanup**: Closes the GPIB session and resource manager.
+
+---
+
+## Core Methods
+
+- **TestRun**  
+  Loops through each test stage, prompts the user to set the device, collects measurement data, and updates a live results table in the terminal.
+
+- **SetupDMM**  
+  Configures the Digital Multimeter (DMM) to the correct mode and range for testing.
+
+- **GetData**  
+  Triggers measurement, waits for service request, fetches results, and calculates statistics.
+
+- **CreateTestReport**  
+  Builds a PDF report with the test results, highlighting pass/fail states, and detailed statistics for each step.
+
+- **SRQHandler**  
+  Handles GPIB service requests (instrument signaling end of measurement).
+
+- **Utility Methods**  
+  - `SendCommand`, `ReadResponse`, `QueryString`: For sending commands and receiving responses from the instrument.
+  - `StdDev`, `ConvertStringToDoubleList`: For data processing and statistics.
+
+---
+
+## User Experience
+
+- The program runs entirely in the terminal, using `Spectre.Console` for rich prompts and tables.
+- It guides the user through each test step-by-step, requesting manual actions and instrument adjustments.
+- After each test, it generates a PDF report and optionally opens it for the user.
+
+---
+
+## Example Flow
+
+1. User starts the program.
+2. Chooses a test (e.g., "Zero Carryover").
+3. Follows prompts to configure the instrument and DUT (Device Under Test) for each stage.
+4. Results are displayed live in the terminal.
+5. A PDF summary report is generated - [View Example File](https://github.com/TGoodhew/HP435B-Test/blob/master/AccuracyTestReport1-44-30%20PM.pdf)
+6. User can open the report or run another test.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE.txt).
+
+See the LICENSE.txt file for full license details.
