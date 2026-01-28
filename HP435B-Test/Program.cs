@@ -257,6 +257,44 @@ namespace HP435B_Test
         }
 
         /// <summary>
+        /// Creates a test details panel with the specified test information.
+        /// </summary>
+        /// <param name="testName">The name of the test.</param>
+        /// <param name="description">The test description.</param>
+        /// <param name="specification">The test specification.</param>
+        /// <returns>A formatted Panel with the test details.</returns>
+        private static Panel CreateTestDetailsPanel(string testName, string description, string specification)
+        {
+            return new Panel(
+                $"[bold yellow]{testName}[/]\n\n" +
+                $"[green]Description:[/] {description}\n\n" +
+                $"[green]Specification:[/] {specification}")
+            {
+                Header = new PanelHeader(" [bold white]Test Details[/] ", Justify.Center),
+                Border = BoxBorder.Rounded,
+                BorderStyle = new Style(Spectre.Console.Color.Cyan1)
+            };
+        }
+
+        /// <summary>
+        /// Displays the application title and description.
+        /// </summary>
+        private static void DisplayApplicationHeader()
+        {
+            AnsiConsole.Write(
+                new FigletText("HP435B Test")
+                    .Centered()
+                    .Color(Spectre.Console.Color.Green));
+            
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine("This program performs automated performance tests on the HP435B power meter");
+            AnsiConsole.MarkupLine("using an HP 34401A DMM and HP 11683A Range Calibrator.");
+            AnsiConsole.WriteLine();
+        }
+
+        /// <summary>
         /// Main entry point for the HP435B test application.
         /// </summary>
         /// <param name="args">Command line arguments (not used).</param>
@@ -269,7 +307,8 @@ namespace HP435B_Test
             }
             catch (Exception)
             {
-                // Ignore if console size cannot be set (e.g., redirected output)
+                // Ignore if console size cannot be set (e.g., PlatformNotSupportedException on Linux/Mac,
+                // IOException when output is redirected, or ArgumentOutOfRangeException if size is invalid)
             }
 
             int testPoints = 100;
@@ -287,17 +326,7 @@ namespace HP435B_Test
                 }
 
                 // Display application title and description
-                AnsiConsole.Write(
-                    new FigletText("HP435B Test")
-                        .Centered()
-                        .Color(Spectre.Console.Color.Green));
-
-                AnsiConsole.WriteLine();
-                AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
-                AnsiConsole.WriteLine();
-                AnsiConsole.MarkupLine("This program performs automated performance tests on the HP435B power meter");
-                AnsiConsole.MarkupLine("using an HP 34401A DMM and HP 11683A Range Calibrator.");
-                AnsiConsole.WriteLine();
+                DisplayApplicationHeader();
                 
                 var panel = new Panel(
                     "[bold yellow]Available Tests:[/]\n\n" +
@@ -364,14 +393,7 @@ namespace HP435B_Test
                         AnsiConsole.Clear();
                         
                         // Redisplay application title
-                        AnsiConsole.Write(
-                            new FigletText("HP435B Test")
-                                .Centered()
-                                .Color(Spectre.Console.Color.Green));
-                        
-                        AnsiConsole.WriteLine();
-                        AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
-                        AnsiConsole.WriteLine();
+                        DisplayApplicationHeader();
                         
                         AnsiConsole.Write(panel);
                         AnsiConsole.WriteLine();
@@ -392,14 +414,7 @@ namespace HP435B_Test
                                 AnsiConsole.Clear();
                                 
                                 // Redisplay application title
-                                AnsiConsole.Write(
-                                    new FigletText("HP435B Test")
-                                        .Centered()
-                                        .Color(Spectre.Console.Color.Green));
-                                
-                                AnsiConsole.WriteLine();
-                                AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
-                                AnsiConsole.WriteLine();
+                                DisplayApplicationHeader();
                                 
                                 AnsiConsole.Write(panel);
                                 AnsiConsole.WriteLine();
@@ -426,15 +441,10 @@ namespace HP435B_Test
                         switch (testChoice)
                         {
                             case "Zero Carryover":
-                                var zeroTestDetailsPanel = new Panel(
-                                    "[bold yellow]Zero Carryover Test[/]\n\n" +
-                                    "[green]Description:[/] Validates zero carryover across all ranges\n\n" +
-                                    "[green]Specification:[/] ±0.5% of full scale when zeroed in the most sensitive range.")
-                                {
-                                    Header = new PanelHeader(" [bold white]Test Details[/] ", Justify.Center),
-                                    Border = BoxBorder.Rounded,
-                                    BorderStyle = new Style(Spectre.Console.Color.Cyan1)
-                                };
+                                var zeroTestDetailsPanel = CreateTestDetailsPanel(
+                                    "Zero Carryover Test",
+                                    "Validates zero carryover across all ranges",
+                                    "±0.5% of full scale when zeroed in the most sensitive range.");
                                 AnsiConsole.Write(zeroTestDetailsPanel);
                                 AnsiConsole.WriteLine();
                                 
@@ -451,15 +461,10 @@ namespace HP435B_Test
                                     4);
                                 break;
                             case "Instrument Accuracy with Calibrator":
-                                var accuracyTestDetailsPanel = new Panel(
-                                    "[bold yellow]Instrument Accuracy with Calibrator Test[/]\n\n" +
-                                    "[green]Description:[/] Tests instrumentation accuracy\n\n" +
-                                    "[green]Specification:[/] ±1% of full scale on all ranges.")
-                                {
-                                    Header = new PanelHeader(" [bold white]Test Details[/] ", Justify.Center),
-                                    Border = BoxBorder.Rounded,
-                                    BorderStyle = new Style(Spectre.Console.Color.Cyan1)
-                                };
+                                var accuracyTestDetailsPanel = CreateTestDetailsPanel(
+                                    "Instrument Accuracy with Calibrator Test",
+                                    "Tests instrumentation accuracy",
+                                    "±1% of full scale on all ranges.");
                                 AnsiConsole.Write(accuracyTestDetailsPanel);
                                 AnsiConsole.WriteLine();
                                 
@@ -476,16 +481,10 @@ namespace HP435B_Test
                                     4);
                                 break;
                             case "Calibration Factor":
-                                var calibrationTestDetailsPanel = new Panel(
-                                    "[bold yellow]Calibration Factor Test[/]\n\n" +
-                                    "[green]Description:[/] Tests calibration factor across 16 positions\n\n" +
-                                    "[green]Specification:[/] 16-position switch normalizes meter reading to account for\n" +
-                                    "calibration factor or effective efficiency (85% to 100% in 1% steps).")
-                                {
-                                    Header = new PanelHeader(" [bold white]Test Details[/] ", Justify.Center),
-                                    Border = BoxBorder.Rounded,
-                                    BorderStyle = new Style(Spectre.Console.Color.Cyan1)
-                                };
+                                var calibrationTestDetailsPanel = CreateTestDetailsPanel(
+                                    "Calibration Factor Test",
+                                    "Tests calibration factor across 16 positions",
+                                    "16-position switch normalizes meter reading to account for calibration factor or effective efficiency (85% to 100% in 1% steps).");
                                 AnsiConsole.Write(calibrationTestDetailsPanel);
                                 AnsiConsole.WriteLine();
                                 
@@ -520,17 +519,7 @@ namespace HP435B_Test
                         AnsiConsole.Clear();
                         
                         // Redisplay application title and panel after test completion
-                        AnsiConsole.Write(
-                            new FigletText("HP435B Test")
-                                .Centered()
-                                .Color(Spectre.Console.Color.Green));
-                        
-                        AnsiConsole.WriteLine();
-                        AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
-                        AnsiConsole.WriteLine();
-                        AnsiConsole.MarkupLine("This program performs automated performance tests on the HP435B power meter");
-                        AnsiConsole.MarkupLine("using an HP 34401A DMM and HP 11683A Range Calibrator.");
-                        AnsiConsole.WriteLine();
+                        DisplayApplicationHeader();
                         
                         AnsiConsole.Write(panel);
                         AnsiConsole.WriteLine();
