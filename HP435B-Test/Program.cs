@@ -305,10 +305,17 @@ namespace HP435B_Test
             {
                 Console.SetWindowSize(Console.WindowWidth, 35);
             }
-            catch (Exception)
+            catch (PlatformNotSupportedException)
             {
-                // Ignore if console size cannot be set (e.g., PlatformNotSupportedException on Linux/Mac,
-                // IOException when output is redirected, or ArgumentOutOfRangeException if size is invalid)
+                // Console sizing not supported on this platform (e.g., Linux/Mac)
+            }
+            catch (IOException)
+            {
+                // Console output is redirected or console is not available
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // Requested console size is invalid for this system
             }
 
             int testPoints = 100;
