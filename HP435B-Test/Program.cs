@@ -268,14 +268,25 @@ namespace HP435B_Test
 
             try
             {
-                // Set console window size to display all content without scrolling
+                // Set console buffer size to display all content without scrolling
+                // This works with both Windows Terminal and legacy console host
                 try
                 {
-                    Console.SetWindowSize(120, 35);
+                    int width = Math.Max(Console.WindowWidth, 120);
+                    int height = 35;
+                    
+                    // Set buffer size to ensure content doesn't require scrolling
+                    Console.SetBufferSize(width, height);
+                    
+                    // Try to set window size for legacy console host (won't affect Windows Terminal)
+                    if (width <= Console.LargestWindowWidth && height <= Console.LargestWindowHeight)
+                    {
+                        Console.SetWindowSize(width, height);
+                    }
                 }
                 catch (Exception)
                 {
-                    // Ignore errors setting window size on platforms that don't support it
+                    // Ignore errors setting console size on platforms that don't support it
                     // or when the specified size exceeds system limits
                 }
                 
