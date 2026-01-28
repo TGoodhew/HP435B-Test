@@ -92,7 +92,7 @@ This application implements three critical performance tests from Section IV of 
 
 **Test Limits** (in Vdc at RECORDER OUTPUT with 1 mW input):
 
-| CAL FACTOR Position | Minimum | Maximum | | CAL FACTOR Position | Minimum | Maximum |
+| CAL FACTOR Position | Minimum | Maximum |  | CAL FACTOR Position | Minimum | Maximum |
 |---------------------|---------|---------|---|---------------------|---------|---------|
 | 100% | 0.994 V | 1.006 V | | 92% | 1.081 V | 1.093 V |
 | 99% | 1.004 V | 1.016 V | | 91% | 1.093 V | 1.105 V |
@@ -173,7 +173,7 @@ The following packages are automatically restored when building:
 - `Syncfusion.Pdf.Base` (v30.1462.37.0) - PDF generation library
 - `Syncfusion.Licensing` (v30.1462.37.0) - License management for Syncfusion components
 - `NationalInstruments.Visa` (v25.5.0.13) - GPIB communication with instruments
-- `Spectre.Console` (v0.50.0) - Rich terminal UI with colors, tables, and prompts
+- `Spectre.Console` (0.50.0) - Rich terminal UI with colors, tables, and prompts
 - `Ivi.Visa` (v8.0.0.0) - VISA interface library for instrument control
 
 ## Installation and Setup

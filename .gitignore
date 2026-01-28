@@ -360,4 +360,5 @@ MigrationBackup/
 .ionide/
 
 # Fody - auto-generated XML schema
-FodyWeavers.xsd435B-Copilot.pdf
+FodyWeavers.xsd
+435B-Copilot.pdf
