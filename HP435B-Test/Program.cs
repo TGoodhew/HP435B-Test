@@ -269,7 +269,15 @@ namespace HP435B_Test
             try
             {
                 // Set console window size to display all content without scrolling
-                Console.SetWindowSize(120, 35);
+                try
+                {
+                    Console.SetWindowSize(120, 35);
+                }
+                catch (Exception)
+                {
+                    // Ignore errors setting window size on platforms that don't support it
+                    // or when the specified size exceeds system limits
+                }
                 
                 // Setup the GPIB connection via the ResourceManager
                 resManager = new NationalInstruments.Visa.ResourceManager();
@@ -481,7 +489,7 @@ namespace HP435B_Test
                                     "[bold yellow]Calibration Factor Test[/]\n\n" +
                                     "[green]Description:[/] Tests calibration factor across 16 positions\n\n" +
                                     "[green]Specification:[/] 16-position switch normalizes meter reading to account for\n" +
-                                    "calibration factor or effective efficiency. Range 85% to 100% in 1% steps.")
+                                    "calibration factor or effective efficiency (85% to 100% in 1% steps).")
                                 {
                                     Header = new PanelHeader(" [bold white]Test Details[/] ", Justify.Center),
                                     Border = BoxBorder.Rounded,
