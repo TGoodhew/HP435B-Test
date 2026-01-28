@@ -373,6 +373,9 @@ namespace HP435B_Test
                         AnsiConsole.WriteLine();
                         AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
                         AnsiConsole.WriteLine();
+                        AnsiConsole.MarkupLine("This program performs automated performance tests on the HP435B power meter");
+                        AnsiConsole.MarkupLine("using an HP 34401A DMM and HP 11683A Range Calibrator.");
+                        AnsiConsole.WriteLine();
                         
                         AnsiConsole.Write(panel);
                         AnsiConsole.WriteLine();
@@ -400,6 +403,9 @@ namespace HP435B_Test
                                 
                                 AnsiConsole.WriteLine();
                                 AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
+                                AnsiConsole.WriteLine();
+                                AnsiConsole.MarkupLine("This program performs automated performance tests on the HP435B power meter");
+                                AnsiConsole.MarkupLine("using an HP 34401A DMM and HP 11683A Range Calibrator.");
                                 AnsiConsole.WriteLine();
                                 
                                 AnsiConsole.Write(panel);
