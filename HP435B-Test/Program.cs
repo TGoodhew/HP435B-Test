@@ -262,6 +262,16 @@ namespace HP435B_Test
         /// <param name="args">Command line arguments (not used).</param>
         static void Main(string[] args)
         {
+            // Set console window height to display title, description, and menu without scrolling
+            try
+            {
+                Console.SetWindowSize(Console.WindowWidth, 35);
+            }
+            catch (Exception)
+            {
+                // Ignore if console size cannot be set (e.g., redirected output)
+            }
+
             int testPoints = 100;
 
             StatisticalValues[] results = new StatisticalValues[16];
@@ -410,9 +420,24 @@ namespace HP435B_Test
 
                         string reportFilename = string.Empty;
 
+                        // Clear screen and display Test Details panel for the specific test
+                        AnsiConsole.Clear();
+
                         switch (testChoice)
                         {
                             case "Zero Carryover":
+                                var zeroTestDetailsPanel = new Panel(
+                                    "[bold yellow]Zero Carryover Test[/]\n\n" +
+                                    "[green]Description:[/] Validates zero carryover across all ranges\n\n" +
+                                    "[green]Specification:[/] ±0.5% of full scale when zeroed in the most sensitive range.")
+                                {
+                                    Header = new PanelHeader(" [bold white]Test Details[/] ", Justify.Center),
+                                    Border = BoxBorder.Rounded,
+                                    BorderStyle = new Style(Spectre.Console.Color.Cyan1)
+                                };
+                                AnsiConsole.Write(zeroTestDetailsPanel);
+                                AnsiConsole.WriteLine();
+                                
                                 TestRun(results, testChoice, testRangeStages);
                                 reportFilename = CreateTestReport(
                                     "Zero Carryover Test",
@@ -426,6 +451,18 @@ namespace HP435B_Test
                                     4);
                                 break;
                             case "Instrument Accuracy with Calibrator":
+                                var accuracyTestDetailsPanel = new Panel(
+                                    "[bold yellow]Instrument Accuracy with Calibrator Test[/]\n\n" +
+                                    "[green]Description:[/] Tests instrumentation accuracy\n\n" +
+                                    "[green]Specification:[/] ±1% of full scale on all ranges.")
+                                {
+                                    Header = new PanelHeader(" [bold white]Test Details[/] ", Justify.Center),
+                                    Border = BoxBorder.Rounded,
+                                    BorderStyle = new Style(Spectre.Console.Color.Cyan1)
+                                };
+                                AnsiConsole.Write(accuracyTestDetailsPanel);
+                                AnsiConsole.WriteLine();
+                                
                                 TestRun(results, testChoice, testRangeStages);
                                 reportFilename = CreateTestReport(
                                     "Instrument Accuracy Test",
@@ -439,6 +476,19 @@ namespace HP435B_Test
                                     4);
                                 break;
                             case "Calibration Factor":
+                                var calibrationTestDetailsPanel = new Panel(
+                                    "[bold yellow]Calibration Factor Test[/]\n\n" +
+                                    "[green]Description:[/] Tests calibration factor across 16 positions\n\n" +
+                                    "[green]Specification:[/] 16-position switch normalizes meter reading to account for\n" +
+                                    "calibration factor or effective efficiency (85% to 100% in 1% steps).")
+                                {
+                                    Header = new PanelHeader(" [bold white]Test Details[/] ", Justify.Center),
+                                    Border = BoxBorder.Rounded,
+                                    BorderStyle = new Style(Spectre.Console.Color.Cyan1)
+                                };
+                                AnsiConsole.Write(calibrationTestDetailsPanel);
+                                AnsiConsole.WriteLine();
+                                
                                 TestRun(results, testChoice, testCalibrationStages);
                                 reportFilename = CreateTestReport(
                                     "Calibration Factor Test",
@@ -468,6 +518,22 @@ namespace HP435B_Test
                             Process.Start("explorer.exe", reportFilename);
 
                         AnsiConsole.Clear();
+                        
+                        // Redisplay application title and panel after test completion
+                        AnsiConsole.Write(
+                            new FigletText("HP435B Test")
+                                .Centered()
+                                .Color(Spectre.Console.Color.Green));
+                        
+                        AnsiConsole.WriteLine();
+                        AnsiConsole.MarkupLine("[bold cyan]HP435B Power Meter Test Automation Tool[/]");
+                        AnsiConsole.WriteLine();
+                        AnsiConsole.MarkupLine("This program performs automated performance tests on the HP435B power meter");
+                        AnsiConsole.MarkupLine("using an HP 34401A DMM and HP 11683A Range Calibrator.");
+                        AnsiConsole.WriteLine();
+                        
+                        AnsiConsole.Write(panel);
+                        AnsiConsole.WriteLine();
                     }
 
                     testChoice = AnsiConsole.Prompt(
