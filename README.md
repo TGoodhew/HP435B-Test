@@ -173,7 +173,7 @@ The following packages are automatically restored when building:
 - `Syncfusion.Pdf.Base` (v30.1462.37.0) - PDF generation library
 - `Syncfusion.Licensing` (v30.1462.37.0) - License management for Syncfusion components
 - `NationalInstruments.Visa` (v25.5.0.13) - GPIB communication with instruments
-- `Spectre.Console` (0.50.0) - Rich terminal UI with colors, tables, and prompts
+- `Spectre.Console` (v0.50.0) - Rich terminal UI with colors, tables, and prompts
 - `Ivi.Visa` (v8.0.0.0) - VISA interface library for instrument control
 
 ## Installation and Setup
@@ -356,7 +356,7 @@ This program is a test automation tool for the HP 435B power meter, interfaced u
    - Configure HP 11683A Calibrator controls
    - Initiate each measurement
 6. Results are displayed live in a formatted table with pass/fail indicators
-7. PDF summary report is generated - [View Example File](https://github.com/TGoodhew/HP435B-Test/blob/master/AccuracyTestReport1-44-30%20PM.pdf)
+7. PDF summary report is automatically generated - [View Example Report](https://github.com/TGoodhew/HP435B-Test/blob/master/AccuracyTestReport1-44-30%20PM.pdf)
 8. User can open the report or run another test
 
 ## Troubleshooting
@@ -382,7 +382,7 @@ This program is a test automation tool for the HP 435B power meter, interfaced u
 
 ## References
 
-- **HP 435B Operating and Service Manual**: Part No. 00435-90040 (included as 435B-Copilot.pdf)
+- **HP 435B Operating and Service Manual**: Part No. 00435-90040 (Available from Keysight Technologies or online archives)
 - **HP 34401A User's Guide**: Available from Keysight Technologies
 - **HP 11683A Range Calibrator Operating Guide**: Available from Keysight Technologies
 - **NI-VISA Documentation**: [ni.com/visa](https://www.ni.com/en-us/support/documentation/supplemental/06/ni-visa-overview.html)
